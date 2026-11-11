@@ -39,7 +39,7 @@
         📖 이용 안내
       </button>
       <button onclick="openImportModal()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-bold shadow-md shadow-red-600/20 active:scale-95">
-        <span>⚡</span> 강좌 대량 수집
+        <span>⚡</span> 강좌 링크 수집
       </button>
       <button onclick="exportProgress()" class="bg-[#272727] hover:bg-[#323232] text-slate-200 text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition font-medium border border-[#3f3f3f]/50 active:scale-95">
         💾 세이브 다운
@@ -54,21 +54,44 @@
     </div>
   </header>
 
-  <!-- Top User Guide Banner (Toggleable) -->
+  <!-- Top User Guide Banner (Bookmarklet Guide Included) -->
   <div id="helpBanner" class="bg-[#1f1b18] border-b border-amber-500/30 px-6 py-4 hidden">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-      <div class="flex flex-col gap-1">
+    <div class="max-w-7xl mx-auto flex flex-col gap-3">
+      <div class="flex justify-between items-center border-b border-amber-500/20 pb-2">
         <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">
-          💡 유튜브 순차 학습 플레이어 스마트 이용 가이드
+          💡 스마트 유튜브 대량 수집 & 북마크릿 이용 가이드
         </h3>
-        <p class="text-xs text-slate-300 leading-relaxed">
-          • <strong>개별 등록</strong>: 원하는 강좌 링크나 카페 게시글을 하나씩 복사해서 수집 창에 붙여넣으면 1➔2➔10 순으로 정렬됩니다.<br>
-          • <strong>채널 대량 수집</strong>: <strong class="text-red-400">[⚡ 강좌 대량 수집]</strong> 창에서 10초 스크립트 복사 후 유튜브 채널 화면 콘솔(F12)에 넣으면 전체 강좌가 한 번에 복사됩니다.
-        </p>
+        <button onclick="toggleHelpBanner()" class="text-xs text-amber-400 hover:text-white font-bold whitespace-nowrap bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/40">
+          닫기 ✕
+        </button>
       </div>
-      <button onclick="toggleHelpBanner()" class="text-xs text-amber-400 hover:text-white font-bold whitespace-nowrap bg-amber-500/20 px-3 py-1.5 rounded-lg border border-amber-500/40">
-        닫기 ✕
-      </button>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300 leading-relaxed">
+        <!-- 1단계 안내 -->
+        <div class="bg-[#141210] p-3 rounded-xl border border-amber-500/20 flex flex-col gap-1.5">
+          <span class="font-bold text-amber-400">📌 1단계: 북마크(즐겨찾기) 바로가기 등록</span>
+          <p>
+            아래 **[📋 유튜브 링크 싹 긁기]** 버튼을 웹 브라우저 상단 **북마크(즐겨찾기) 바**로 마우스로 잡고 끌어서 등록해 주세요.
+          </p>
+          <div class="pt-1">
+            <a href="javascript:(function(){const links=[...document.querySelectorAll('a')].map(a=>a.href).filter(h=>h.includes('watch?v=')).map(h=>h.split('&')[0]).filter((v,i,arr)=>arr.indexOf(v)===i);navigator.clipboard.writeText(links.join('\n')).then(()=>alert('클립보드에 복사 되었습니다! (총 '+links.length+'개)'));})();" 
+               onclick="event.preventDefault(); alert('이 버튼을 마우스로 잡고 상단 브라우저 즐겨찾기(북마크) 바로 끌어서 넣어주세요!');"
+               class="inline-block bg-gradient-to-r from-amber-600 to-amber-500 text-white font-bold px-3 py-1.5 rounded-lg border border-amber-400/40 cursor-grab active:cursor-grabbing shadow-sm">
+              📋 유튜브 링크 싹 긁기 (북마크로 끌어놓으세요)
+            </a>
+          </div>
+        </div>
+
+        <!-- 2단계 안내 -->
+        <div class="bg-[#141210] p-3 rounded-xl border border-amber-500/20 flex flex-col gap-1.5">
+          <span class="font-bold text-amber-400">📌 2단계: 유튜브 페이지에서 원클릭 수집</span>
+          <p>
+            1. 수집할 유튜브 채널 동영상 탭에 접속하여 마우스 휠을 아래로 내려 **강좌가 최대한 많이 보이도록 펼쳐줍니다.**<br>
+            2. 즐겨찾기 바에 등록해둔 **[📋 유튜브 링크 싹 긁기]** 버튼을 누르면 동영상 주소들이 클립보드로 자동 복사됩니다.<br>
+            3. 본 플레이어로 돌아와 **[⚡ 강좌 링크 수집]** 버튼을 누른 뒤 `Ctrl + V`로 붙여넣으시면 1초 만에 수집이 완료됩니다!
+          </p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -195,29 +218,12 @@
     </section>
   </main>
 
-  <!-- 강좌 수집 모달 (3단계 대량/개별 수집 안내 통합) -->
+  <!-- 강좌 수집 모달 (원터치 텍스트/URL 파서) -->
   <div id="importModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-[#181818] border border-[#272727] rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-[#272727] pb-3">
-        <h3 class="font-bold text-base text-white flex items-center gap-2">⚡ 강좌 대량 / 개별 수집 가이드</h3>
+        <h3 class="font-bold text-base text-white flex items-center gap-2">⚡ 강좌 링크 수집 및 폴더 지정</h3>
         <button onclick="closeImportModal()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
-      </div>
-
-      <!-- 10초 대량 수집 팁 가이드 상자 -->
-      <div class="bg-[#212121] p-3.5 rounded-xl border border-red-500/30 flex flex-col gap-2 text-xs">
-        <span class="font-bold text-red-400 flex items-center gap-1">🚀 유튜브 채널 전체 강좌 10초 대량 수집 팁</span>
-        <div class="flex gap-2">
-          <a href="https://www.youtube.com/@specialist1/videos" target="_blank" class="bg-[#272727] hover:bg-[#383838] text-slate-200 px-2.5 py-1.5 rounded-lg border border-[#3f3f3f] text-[11px] font-medium flex items-center gap-1">
-            ↗️ 수재비 채널 열기
-          </a>
-          <button onclick="copyExtractScript()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 px-2.5 py-1.5 rounded-lg border border-red-500/40 text-[11px] font-bold">
-            📋 10초 추출 코드 복사
-          </button>
-        </div>
-        <p class="text-[11px] text-slate-400 leading-normal">
-          1. 유튜브 화면에서 <strong>F12 ➡️ Console</strong>을 연 뒤 코드를 붙여넣고 <code>Enter</code>를 치면 900개 전체 주소가 자동 복사됩니다.<br>
-          2. 개별 영상은 주소나 글 뭉치를 그대로 복사해서 아래 상자에 하나씩 넣으셔도 됩니다!
-        </p>
       </div>
 
       <div class="flex flex-col gap-2">
@@ -235,8 +241,8 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs text-slate-300 font-medium">2. 유튜브 URL 또는 커뮤니티 글 붙여넣기</label>
-        <textarea id="modalTextInput" rows="5" placeholder="복사한 텍스트를 그대로 붙여넣으세요 (Ctrl + V):&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
+        <label class="text-xs text-slate-300 font-medium">2. 복사한 링크 뭉치 붙여넣기 (Ctrl + V)</label>
+        <textarea id="modalTextInput" rows="6" placeholder="유튜브에서 긁어온 동영상 링크 뭉치나 URL을 붙여넣으세요:&#10;https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;https://youtu.be/dQw4w9WgXcQ&#10;1. 데이터 통신 기초 - https://youtu.be/fJ9rUzIMcZQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
       </div>
 
       <div class="flex items-center justify-between pt-2 border-t border-[#272727]">
@@ -280,12 +286,6 @@
     function toggleHelpBanner() {
       const banner = document.getElementById('helpBanner');
       banner.classList.toggle('hidden');
-    }
-
-    function copyExtractScript() {
-      const scriptCode = `(() => { const links = Array.from(document.querySelectorAll('a#video-title-link')).map(a => \`\${a.title} - \${a.href}\`).join('\\n'); copy(links); alert(\`🎉 성공! 총 \${links.split('\\n').length}개 동영상 주소가 복사되었습니다. 플레이어 수집 창에 붙여넣으세요!\`); })();`;
-      navigator.clipboard.writeText(scriptCode);
-      alert('📋 10초 추출 스크립트 코드가 복사 되었습니다!\n\n유튜브 화면에서 F12 ➡️ Console 창을 열고 Ctrl+V 후 Enter를 치세요!');
     }
 
     function renderCategories() {
@@ -438,7 +438,7 @@
         if (match && match[1]) {
           const vidId = match[1];
           let title = line.replace(/https?:\/\/[^\s]+/g, '').trim();
-          if (!title) title = `수집 영상 (${vidId})`;
+          if (!title) title = `강좌 영상 (${vidId})`;
 
           if (!allVideos.some(v => v.id === vidId)) {
             allVideos.push({ id: vidId, title: title, category: targetCategory, isMembership: isMembership });
@@ -523,7 +523,7 @@
       if (videos.length === 0) {
         container.innerHTML = `
           <div class="text-center py-12 text-slate-500 text-xs border border-dashed border-[#272727] rounded-2xl">
-            이 폴더에 수집된 강좌가 없습니다.<br><br>1. 상단 <strong class="text-red-400">[+ 폴더 생성]</strong>으로 폴더를 만드세요.<br>2. <strong class="text-red-400">[⚡ 강좌 대량 수집]</strong> 버튼으로 링크를 붙여넣으세요!
+            이 폴더에 수집된 강좌가 없습니다.<br><br>1. 상단 <strong class="text-red-400">[+ 폴더 생성]</strong>으로 폴더를 만드세요.<br>2. <strong class="text-red-400">[⚡ 강좌 링크 수집]</strong> 버튼으로 링크를 붙여넣으세요!
           </div>
         `;
       } else {
