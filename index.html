@@ -59,7 +59,7 @@
     <div class="max-w-7xl mx-auto flex flex-col gap-3">
       <div class="flex justify-between items-center border-b border-amber-500/20 pb-2">
         <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">
-          💡 북마크릿으로 깔끔하게 유튜브 링크 수집하는 방법
+          💡 깔끔한 유튜브 링크 수집 및 사용 가이드
         </h3>
         <button onclick="toggleHelpBanner()" class="text-xs text-amber-400 hover:text-white font-bold whitespace-nowrap bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/40">
           닫기 ✕
@@ -115,7 +115,7 @@
           <button onclick="playPrev()" class="bg-[#272727] hover:bg-[#323232] text-slate-200 text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-medium active:scale-95">
             ◀ 이전
           </button>
-          <button id="completeBtn" onclick="toggleCompleteCurrent()" class="bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30 text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-medium active:scale-95">
+          <button id="completeBtn" onclick="toggleCompleteCurrent()" class="bg-[#272727] hover:bg-[#323232] text-slate-400 border border-[#3f3f3f] text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-bold active:scale-95">
             ✓ 수강 완료
           </button>
           <button onclick="playNext()" class="bg-red-600 hover:bg-red-500 text-white text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 font-bold transition shadow-lg shadow-red-600/20 active:scale-95">
@@ -191,21 +191,24 @@
               </button>
             </div>
 
-            <!-- Multi Select Controls -->
-            <div class="flex items-center justify-between bg-[#141414] p-2 rounded-xl border border-[#272727] text-xs">
+            <!-- Multi Select & Dropdown Folder Move Controls -->
+            <div class="flex items-center justify-between bg-[#141414] p-2 rounded-xl border border-[#272727] text-xs gap-2">
               <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer select-none">
-                <input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll(this)" class="accent-red-600 rounded">
-                <span>전체 선택</span>
+                <input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll(this)" class="w-4 h-4 accent-red-600 rounded cursor-pointer">
+                <span>전체선택</span>
               </label>
-              <div class="flex items-center gap-2">
-                <span id="selectedCountText" class="text-slate-500 text-[11px]">0개 선택됨</span>
-                <button onclick="moveSelectedCategory()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition">
-                  📁 선택 이동
+              
+              <div class="flex items-center gap-1.5 flex-1 justify-end">
+                <select id="moveTargetSelect" class="bg-[#0f0f0f] border border-[#3f3f3f] text-xs text-slate-200 px-2 py-1 rounded-lg outline-none focus:border-red-500">
+                  <!-- 동적 폴더 목록 주입 -->
+                </select>
+                <button onclick="moveSelectedCategoryDropdown()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap">
+                  📁 폴더 이동
                 </button>
               </div>
             </div>
 
-            <!-- Sort Select (자연어 숫자 오름차순 기본 적용) -->
+            <!-- Sort Select -->
             <select id="sortOption" onchange="renderPlaylist()" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 rounded-xl p-2.5 w-full focus:outline-none focus:border-red-500 font-medium">
               <option value="natural-asc" selected>🔢 자연어 오름차순 (1 ➔ 2 ➔ 10 ➔ 100 정렬)</option>
               <option value="natural-desc">🔢 자연어 내림차순 (100 ➔ 10 ➔ 2 ➔ 1 정렬)</option>
@@ -291,10 +294,14 @@
     function onYouTubeIframeAPIReady() {
       renderCategories();
       const filtered = getFilteredVideos();
-      player = new YT.Player('player', {
-        videoId: filtered[0]?.id || '',
-        events: { 'onStateChange': onPlayerStateChange }
-      });
+      if (filtered.length > 0) {
+        player = new YT.Player('player', {
+          videoId: filtered[0].id,
+          events: { 'onStateChange': onPlayerStateChange }
+        });
+      } else {
+        player = new YT.Player('player', { videoId: '' });
+      }
       renderPlaylist();
     }
 
@@ -345,9 +352,11 @@
     function renderCategories() {
       const tabContainer = document.getElementById('categoryTabContainer');
       const selectContainer = document.getElementById('modalCategorySelect');
+      const moveSelectContainer = document.getElementById('moveTargetSelect');
       
       tabContainer.innerHTML = '';
       selectContainer.innerHTML = '';
+      moveSelectContainer.innerHTML = '';
 
       const allTab = document.createElement('button');
       allTab.onclick = () => selectCategory('all');
@@ -383,6 +392,11 @@
         opt.value = cat;
         opt.innerText = `📁 ${cat}`;
         selectContainer.appendChild(opt);
+
+        const moveOpt = document.createElement('option');
+        moveOpt.value = cat;
+        moveOpt.innerText = cat;
+        moveSelectContainer.appendChild(moveOpt);
       });
     }
 
@@ -534,6 +548,7 @@
       }
     }
 
+    // 폴더를 클릭해도 첫 영상 자동 재생 안 되도록 수정됨
     function selectCategory(category) {
       currentCategory = category;
       currentIndex = 0;
@@ -541,15 +556,9 @@
       renderCategories();
 
       document.getElementById('categoryTitle').innerText = category === 'all' ? '전체 보기' : `${category}`;
-
-      const filtered = getFilteredVideos();
-      if (filtered.length > 0 && player && player.loadVideoById) {
-        player.loadVideoById(filtered[0].id);
-      }
       renderPlaylist();
     }
 
-    // 자연어 오름차순/내림차순 정렬 함수 (1, 2, 10, 100 완벽 지원)
     function getFilteredVideos() {
       let list = currentCategory === 'all' 
         ? [...allVideos] 
@@ -599,32 +608,30 @@
       document.getElementById('selectedCountText').innerText = `${selectedVideoIds.length}개 선택됨`;
     }
 
-    function moveSelectedCategory() {
+    // 드롭다운 셀렉트 박스로 폴더 이동 처리
+    function moveSelectedCategoryDropdown() {
       if (selectedVideoIds.length === 0) {
-        alert('이동할 강좌를 선택해 주세요!');
+        alert('이동할 강좌를 체크박스로 선택해 주세요!');
         return;
       }
 
-      if (categories.length === 0) {
-        alert('이동할 대상 폴더가 없습니다. 먼저 상단 [+ 폴더 생성]으로 폴더를 만들어주세요!');
+      const targetCat = document.getElementById('moveTargetSelect').value;
+      if (!targetCat) {
+        alert('이동할 대상 폴더를 선택해 주세요.');
         return;
       }
 
-      let targetCat = prompt(`선택한 ${selectedVideoIds.length}개 강좌를 이동시킬 폴더 이름을 정확히 입력하세요:\n\n[가능한 폴더 목록]:\n` + categories.join(', '));
-      if (targetCat && categories.includes(targetCat.trim())) {
-        const trimmed = targetCat.trim();
-        allVideos.forEach(v => {
-          if (selectedVideoIds.includes(v.id)) {
-            v.category = trimmed;
-          }
-        });
-        localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
-        selectedVideoIds = [];
-        renderPlaylist();
-        alert(`🎉 선택한 강좌들이 '${trimmed}' 폴더로 정상 이동되었습니다!`);
-      } else if (targetCat) {
-        alert('존재하지 않는 폴더 이름입니다.');
-      }
+      allVideos.forEach(v => {
+        if (selectedVideoIds.includes(v.id)) {
+          v.category = targetCat;
+        }
+      });
+
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      selectedVideoIds = [];
+      document.getElementById('selectAllCheck').checked = false;
+      renderPlaylist();
+      alert(`🎉 선택한 강좌들이 '${targetCat}' 폴더로 정상 이동되었습니다!`);
     }
 
     function renderPlaylist() {
@@ -647,12 +654,12 @@
       } else {
         videos.forEach((vid, idx) => {
           const isCompleted = completedList.includes(vid.id);
-          const isActive = idx === currentIndex;
+          const isActive = idx === currentIndex && currentCategory === (player ? currentCategory : currentCategory);
           const isChecked = selectedVideoIds.includes(vid.id);
           if (isCompleted) completedCount++;
 
           const item = document.createElement('div');
-          item.className = `p-3 rounded-xl border draggable-item transition flex items-center justify-between gap-2.5 ${
+          item.className = `p-3 rounded-xl border draggable-item transition flex items-center justify-between gap-3 ${
             isActive ? 'bg-[#272727] border-red-500/80 text-white shadow-lg ring-1 ring-red-500/30' : 'bg-[#0f0f0f]/80 border-[#272727] text-slate-300 hover:bg-[#212121]'
           }`;
           item.draggable = true;
@@ -667,20 +674,18 @@
             moveVideoPosition(fromIdx, toIdx);
           };
 
-          item.onclick = (e) => {
-            if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
-              playVideoIndex(idx);
-            }
-          };
-
           item.innerHTML = `
-            <div class="flex items-center gap-2.5 min-w-0">
-              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectVideo('${vid.id}')" class="accent-red-600 rounded cursor-pointer">
-              <span class="text-xs font-mono px-2 py-0.5 rounded-md ${isActive ? 'bg-red-600 text-white font-bold' : 'bg-[#272727] text-slate-400'}">${idx + 1}</span>
-              <span class="text-xs font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <!-- 선택박스 영역을 넓히고 충돌 방지 -->
+              <label class="p-1 cursor-pointer flex items-center" onclick="event.stopPropagation()">
+                <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectVideo('${vid.id}')" class="w-4 h-4 accent-red-600 rounded cursor-pointer">
+              </label>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-md shrink-0 ${isActive ? 'bg-red-600 text-white font-bold' : 'bg-[#272727] text-slate-400'}">${idx + 1}</span>
+              <span onclick="playVideoIndex(${idx})" class="text-xs font-medium truncate cursor-pointer hover:underline flex-1 ${isCompleted ? 'line-through text-slate-500' : ''}" title="${vid.title}">${vid.title}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-red-400 font-bold' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : ''}</span>
+              <button onclick="event.stopPropagation(); playVideoIndex(${idx})" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2 py-1 rounded-lg text-[11px] font-bold transition">▶ 재생</button>
               <button onclick="event.stopPropagation(); deleteSingleVideo('${vid.id}')" class="text-xs text-slate-500 hover:text-red-400 font-bold px-1">✕</button>
             </div>
           `;
@@ -699,6 +704,23 @@
       const percent = videos.length > 0 ? Math.round((completedCount / videos.length) * 100) : 0;
       document.getElementById('progressBar').style.width = `${percent}%`;
       document.getElementById('progressText').innerText = `${completedCount} / ${videos.length} (${percent}%)`;
+      updateCompleteButtonState();
+    }
+
+    // 수강 완료 버튼 색상 상태 동기화 (미완료: 회색, 완료: 초록색)
+    function updateCompleteButtonState() {
+      const videos = getFilteredVideos();
+      const currentId = videos[currentIndex]?.id;
+      const btn = document.getElementById('completeBtn');
+      if (!currentId) return;
+
+      if (completedList.includes(currentId)) {
+        btn.className = "bg-emerald-500 text-white border border-emerald-400 text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-bold shadow-md shadow-emerald-500/20 active:scale-95";
+        btn.innerText = "✓ 수강 완료됨";
+      } else {
+        btn.className = "bg-[#272727] hover:bg-[#323232] text-slate-400 border border-[#3f3f3f] text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-bold active:scale-95";
+        btn.innerText = "✓ 수강 완료";
+      }
     }
 
     function moveVideoPosition(fromIdx, toIdx) {
@@ -722,7 +744,9 @@
       const videos = getFilteredVideos();
       if (idx >= 0 && idx < videos.length) {
         currentIndex = idx;
-        player.loadVideoById(videos[currentIndex].id);
+        if (player && player.loadVideoById) {
+          player.loadVideoById(videos[currentIndex].id);
+        }
         renderPlaylist();
       }
     }
@@ -756,6 +780,7 @@
       if (currentId && !completedList.includes(currentId)) {
         completedList.push(currentId);
         localStorage.setItem('completed_videos', JSON.stringify(completedList));
+        renderPlaylist();
       }
     }
 
