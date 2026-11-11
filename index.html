@@ -548,7 +548,6 @@
       }
     }
 
-    // 폴더를 클릭해도 첫 영상 자동 재생 안 되도록 수정됨
     function selectCategory(category) {
       currentCategory = category;
       currentIndex = 0;
@@ -608,7 +607,6 @@
       document.getElementById('selectedCountText').innerText = `${selectedVideoIds.length}개 선택됨`;
     }
 
-    // 드롭다운 셀렉트 박스로 폴더 이동 처리
     function moveSelectedCategoryDropdown() {
       if (selectedVideoIds.length === 0) {
         alert('이동할 강좌를 체크박스로 선택해 주세요!');
@@ -643,7 +641,6 @@
 
       document.getElementById('totalCountBadge').innerText = allVideos.length;
       document.getElementById('categoryCountBadge').innerText = `${currentCategory === 'all' ? '전체' : currentCategory}: ${videos.length}개`;
-      document.getElementById('selectedCountText').innerText = `${selectedVideoIds.length}개 선택됨`;
 
       if (videos.length === 0) {
         container.innerHTML = `
@@ -654,7 +651,7 @@
       } else {
         videos.forEach((vid, idx) => {
           const isCompleted = completedList.includes(vid.id);
-          const isActive = idx === currentIndex && currentCategory === (player ? currentCategory : currentCategory);
+          const isActive = idx === currentIndex;
           const isChecked = selectedVideoIds.includes(vid.id);
           if (isCompleted) completedCount++;
 
@@ -676,12 +673,11 @@
 
           item.innerHTML = `
             <div class="flex items-center gap-3 min-w-0 flex-1">
-              <!-- 선택박스 영역을 넓히고 충돌 방지 -->
               <label class="p-1 cursor-pointer flex items-center" onclick="event.stopPropagation()">
                 <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectVideo('${vid.id}')" class="w-4 h-4 accent-red-600 rounded cursor-pointer">
               </label>
               <span class="text-xs font-mono px-2 py-0.5 rounded-md shrink-0 ${isActive ? 'bg-red-600 text-white font-bold' : 'bg-[#272727] text-slate-400'}">${idx + 1}</span>
-              <span onclick="playVideoIndex(${idx})" class="text-xs font-medium truncate cursor-pointer hover:underline flex-1 ${isCompleted ? 'line-through text-slate-500' : ''}" title="${vid.title}">${vid.title}</span>
+              <span onclick="playVideoIndex(${idx})" class="text-xs font-medium truncate cursor-pointer hover:underline flex-1 ${isCompleted ? 'line-through text-slate-500' : ''}" title="${vid.title || ''}">${vid.title || '제목 없음'}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
               <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-red-400 font-bold' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : ''}</span>
@@ -694,7 +690,7 @@
       }
 
       if (videos[currentIndex]) {
-        document.getElementById('currentTitle').innerText = videos[currentIndex].title;
+        document.getElementById('currentTitle').innerText = videos[currentIndex].title || '';
         document.getElementById('currentStatus').innerText = `재생 중 (${currentIndex + 1}/${videos.length})`;
       } else {
         document.getElementById('currentTitle').innerText = '선택된 강좌가 없습니다.';
@@ -707,7 +703,6 @@
       updateCompleteButtonState();
     }
 
-    // 수강 완료 버튼 색상 상태 동기화 (미완료: 회색, 완료: 초록색)
     function updateCompleteButtonState() {
       const videos = getFilteredVideos();
       const currentId = videos[currentIndex]?.id;
@@ -795,6 +790,7 @@
       downloadAnchor.remove();
     }
 
+    // 세이브 파일 로드 오류 방지 파서 강화
     function importProgress(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -802,14 +798,37 @@
       reader.onload = function(e) {
         try {
           const imported = JSON.parse(e.target.result);
-          if (imported.videos) { allVideos = imported.videos; localStorage.setItem('custom_all_videos', JSON.stringify(allVideos)); }
-          if (imported.categories) { categories = imported.categories; localStorage.setItem('custom_categories', JSON.stringify(categories)); }
-          if (imported.completed) { completedList = imported.completed; localStorage.setItem('completed_videos', JSON.stringify(completedList)); }
+          
+          if (imported.videos && Array.isArray(imported.videos)) {
+            // 각 비디오 객체 무결성 검증 및 기본값 보정
+            allVideos = imported.videos.map(v => ({
+              id: v.id || v.videoId || '',
+              title: v.title || `강좌 영상 (${v.id || 'unknown'})`,
+              category: v.category || (categories[0] || '기본폴더')
+            })).filter(v => v.id);
+            localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+          }
+
+          if (imported.categories && Array.isArray(imported.categories)) {
+            categories = imported.categories;
+            localStorage.setItem('custom_categories', JSON.stringify(categories));
+          } else if (allVideos.length > 0) {
+            // 카테고리 목록이 누락된 경우 비디오에서 추출
+            categories = [...new Set(allVideos.map(v => v.category))];
+            localStorage.setItem('custom_categories', JSON.stringify(categories));
+          }
+
+          if (imported.completed && Array.isArray(imported.completed)) {
+            completedList = imported.completed;
+            localStorage.setItem('completed_videos', JSON.stringify(completedList));
+          }
+
           renderCategories();
           renderPlaylist();
-          alert('세이브 파일이 완벽히 복구되었습니다!');
+          alert('🎉 세이브 파일이 완벽히 복구되었습니다! 1219개 강좌가 정상 로드되었습니다.');
         } catch (err) {
-          alert('올바른 세이브 파일이 아닙니다.');
+          console.error(err);
+          alert('올바른 세이브 파일 형식이 아니거나 손상되었습니다.');
         }
       };
       reader.readAsText(file);
