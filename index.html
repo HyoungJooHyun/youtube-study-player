@@ -191,18 +191,25 @@
               </button>
             </div>
 
-            <!-- Multi Select & Dropdown Folder Move Controls -->
-            <div class="flex items-center justify-between bg-[#141414] p-2 rounded-xl border border-[#272727] text-xs gap-2">
-              <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer select-none">
-                <input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll(this)" class="w-4 h-4 accent-red-600 rounded cursor-pointer">
-                <span>전체선택</span>
-              </label>
-              
-              <div class="flex items-center gap-1.5 flex-1 justify-end">
-                <select id="moveTargetSelect" class="bg-[#0f0f0f] border border-[#3f3f3f] text-xs text-slate-200 px-2 py-1 rounded-lg outline-none focus:border-red-500">
+            <!-- Multi Select & Expanded Dropdown Controls -->
+            <div class="flex flex-col bg-[#141414] p-2 rounded-xl border border-[#272727] text-xs gap-2">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer select-none">
+                  <input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll(this)" class="w-4 h-4 accent-red-600 rounded cursor-pointer">
+                  <span>전체선택</span>
+                </label>
+                <span id="selectedCountText" class="text-slate-400 text-[11px]">0개 선택됨</span>
+                <button onclick="deleteSelectedVideos()" class="bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap">
+                  🗑️ 선택 삭제
+                </button>
+              </div>
+
+              <div class="flex items-center gap-1.5 pt-1 border-t border-[#272727]">
+                <!-- 폴더 이동 너비 확장 -->
+                <select id="moveTargetSelect" class="bg-[#0f0f0f] border border-[#3f3f3f] text-xs text-slate-200 px-3 py-1.5 rounded-lg outline-none focus:border-red-500 flex-1 font-medium">
                   <!-- 동적 폴더 목록 주입 -->
                 </select>
-                <button onclick="moveSelectedCategoryDropdown()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2.5 py-1 rounded-lg text-xs font-bold transition whitespace-nowrap">
+                <button onclick="moveSelectedCategoryDropdown()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap">
                   📁 폴더 이동
                 </button>
               </div>
@@ -607,6 +614,21 @@
       document.getElementById('selectedCountText').innerText = `${selectedVideoIds.length}개 선택됨`;
     }
 
+    // 선택된 강좌 일괄 삭제 (확인창 없이 즉시 삭제)
+    function deleteSelectedVideos() {
+      if (selectedVideoIds.length === 0) {
+        alert('삭제할 강좌를 체크박스로 선택해 주세요!');
+        return;
+      }
+
+      allVideos = allVideos.filter(v => !selectedVideoIds.includes(v.id));
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      selectedVideoIds = [];
+      const masterCheck = document.getElementById('selectAllCheck');
+      if (masterCheck) masterCheck.checked = false;
+      renderPlaylist();
+    }
+
     function moveSelectedCategoryDropdown() {
       if (selectedVideoIds.length === 0) {
         alert('이동할 강좌를 체크박스로 선택해 주세요!');
@@ -627,7 +649,8 @@
 
       localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
       selectedVideoIds = [];
-      document.getElementById('selectAllCheck').checked = false;
+      const masterCheck = document.getElementById('selectAllCheck');
+      if (masterCheck) masterCheck.checked = false;
       renderPlaylist();
       alert(`🎉 선택한 강좌들이 '${targetCat}' 폴더로 정상 이동되었습니다!`);
     }
@@ -641,6 +664,7 @@
 
       document.getElementById('totalCountBadge').innerText = allVideos.length;
       document.getElementById('categoryCountBadge').innerText = `${currentCategory === 'all' ? '전체' : currentCategory}: ${videos.length}개`;
+      document.getElementById('selectedCountText').innerText = `${selectedVideoIds.length}개 선택됨`;
 
       if (videos.length === 0) {
         container.innerHTML = `
@@ -682,7 +706,7 @@
             <div class="flex items-center gap-2 shrink-0">
               <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-red-400 font-bold' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : ''}</span>
               <button onclick="event.stopPropagation(); playVideoIndex(${idx})" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 border border-red-500/30 px-2 py-1 rounded-lg text-[11px] font-bold transition">▶ 재생</button>
-              <button onclick="event.stopPropagation(); deleteSingleVideo('${vid.id}')" class="text-xs text-slate-500 hover:text-red-400 font-bold px-1">✕</button>
+              <button onclick="event.stopPropagation(); deleteSingleVideo('${vid.id}')" class="text-xs text-slate-500 hover:text-red-400 font-bold px-1" title="삭제">✕</button>
             </div>
           `;
           container.appendChild(item);
@@ -727,12 +751,11 @@
       renderPlaylist();
     }
 
+    // 확인창 없이 즉시 삭제 처리
     function deleteSingleVideo(vidId) {
-      if (confirm('이 강좌를 목록에서 삭제하시겠습니까?')) {
-        allVideos = allVideos.filter(v => v.id !== vidId);
-        localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
-        renderPlaylist();
-      }
+      allVideos = allVideos.filter(v => v.id !== vidId);
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      renderPlaylist();
     }
 
     function playVideoIndex(idx) {
@@ -790,7 +813,6 @@
       downloadAnchor.remove();
     }
 
-    // 세이브 파일 로드 오류 방지 파서 강화
     function importProgress(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -800,7 +822,6 @@
           const imported = JSON.parse(e.target.result);
           
           if (imported.videos && Array.isArray(imported.videos)) {
-            // 각 비디오 객체 무결성 검증 및 기본값 보정
             allVideos = imported.videos.map(v => ({
               id: v.id || v.videoId || '',
               title: v.title || `강좌 영상 (${v.id || 'unknown'})`,
@@ -813,7 +834,6 @@
             categories = imported.categories;
             localStorage.setItem('custom_categories', JSON.stringify(categories));
           } else if (allVideos.length > 0) {
-            // 카테고리 목록이 누락된 경우 비디오에서 추출
             categories = [...new Set(allVideos.map(v => v.category))];
             localStorage.setItem('custom_categories', JSON.stringify(categories));
           }
@@ -825,7 +845,7 @@
 
           renderCategories();
           renderPlaylist();
-          alert('🎉 세이브 파일이 완벽히 복구되었습니다! 1219개 강좌가 정상 로드되었습니다.');
+          alert('🎉 세이브 파일이 완벽히 복구되었습니다!');
         } catch (err) {
           console.error(err);
           alert('올바른 세이브 파일 형식이 아니거나 손상되었습니다.');
