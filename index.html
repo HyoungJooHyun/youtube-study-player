@@ -13,72 +13,74 @@
     .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
     .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    .draggable-item { cursor: grab; }
+    .draggable-item:active { cursor: grabbing; opacity: 0.6; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
 
   <!-- Header -->
-  <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex flex-wrap justify-between items-center gap-2 shadow-md">
+  <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700/80 px-5 py-3.5 flex flex-wrap justify-between items-center gap-3 shadow-xl sticky top-0 z-40">
     <div class="flex items-center space-x-3">
-      <div class="p-2 bg-indigo-600/20 rounded-lg text-indigo-400">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+      <div class="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
       </div>
       <div>
-        <h1 class="font-bold text-lg text-white leading-tight">유튜브 순차 학습 플레이어</h1>
-        <span class="text-xs text-indigo-300 font-medium">탐색기형 스마트 커리큘럼</span>
+        <h1 class="font-bold text-lg text-white leading-tight tracking-tight">유튜브 순차 학습 플레이어</h1>
+        <span class="text-xs text-indigo-400 font-medium">스마트 탐색기 & 커리큘럼 매니저</span>
       </div>
     </div>
     <div class="flex items-center space-x-2">
-      <button onclick="openImportModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-bold shadow-sm">
-        ➕ 강좌/링크 수집하기
+      <button onclick="openImportModal()" class="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition font-bold shadow-lg shadow-indigo-600/30 active:scale-95">
+        ➕ 강좌 대량 수집
       </button>
-      <button onclick="exportProgress()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium border border-slate-600">
+      <button onclick="exportProgress()" class="bg-slate-700/80 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 transition font-medium border border-slate-600/60 shadow-sm active:scale-95">
         💾 세이브 다운
       </button>
-      <button onclick="document.getElementById('fileInput').click()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium border border-slate-600">
+      <button onclick="document.getElementById('fileInput').click()" class="bg-slate-700/80 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 transition font-medium border border-slate-600/60 shadow-sm active:scale-95">
         📂 세이브 로드
       </button>
       <input type="file" id="fileInput" accept=".json" onchange="importProgress(event)" class="hidden">
-      <button onclick="sharePlayer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium border border-slate-600">
-        🔗 공유하기
+      <button onclick="sharePlayer()" class="bg-slate-700/80 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-xl flex items-center gap-1.5 transition font-medium border border-slate-600/60 shadow-sm active:scale-95">
+        🔗 공유
       </button>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-7xl mx-auto w-full">
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 max-w-7xl mx-auto w-full">
     
     <!-- Left: Player Section (7 cols) -->
     <section class="lg:col-span-7 flex flex-col gap-4">
-      <div class="bg-black rounded-xl shadow-2xl overflow-hidden border border-slate-800">
+      <div class="bg-black rounded-2xl shadow-2xl overflow-hidden border border-slate-800 ring-1 ring-slate-800">
         <div class="aspect-video-container">
           <div id="player"></div>
         </div>
       </div>
 
       <!-- Player Controls -->
-      <div class="bg-slate-800/90 backdrop-blur rounded-xl p-4 border border-slate-700/60 shadow-lg">
+      <div class="bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 border border-slate-700/60 shadow-xl">
         <div class="flex flex-col gap-1 mb-3">
-          <span id="currentStatus" class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">재생 준비 완료</span>
-          <h2 id="currentTitle" class="text-base font-bold text-white line-clamp-2">강의를 선택해 주세요</h2>
+          <span id="currentStatus" class="text-xs font-bold text-indigo-400 uppercase tracking-wider">재생 대기 중</span>
+          <h2 id="currentTitle" class="text-base font-bold text-white line-clamp-2">강의를 선택하거나 왼쪽 수집 버튼으로 강좌를 추가해 주세요</h2>
         </div>
 
         <div class="flex items-center justify-between pt-3 border-t border-slate-700/50">
-          <button onclick="playPrev()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 transition font-medium">
+          <button onclick="playPrev()" class="bg-slate-700/80 hover:bg-slate-600 text-slate-200 text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-medium active:scale-95">
             ◀ 이전
           </button>
-          <button id="completeBtn" onclick="toggleCompleteCurrent()" class="bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/50 border border-emerald-500/40 text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 transition font-medium">
+          <button id="completeBtn" onclick="toggleCompleteCurrent()" class="bg-emerald-900/40 text-emerald-300 hover:bg-emerald-800/50 border border-emerald-500/40 text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-medium active:scale-95">
             ✓ 수강 완료
           </button>
-          <button onclick="playNext()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 font-medium transition">
+          <button onclick="playNext()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 font-medium transition shadow-lg shadow-indigo-600/30 active:scale-95">
             다음 ▶
           </button>
         </div>
       </div>
 
       <!-- AdSense Banner -->
-      <div class="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[90px] text-center">
-        <span class="text-xs text-slate-500 mb-1">광고 영역 (AdSense 728x90)</span>
+      <div class="bg-slate-800/40 border border-dashed border-slate-700/60 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[90px] text-center">
+        <span class="text-xs text-slate-500 mb-1 font-medium">광고 영역 (AdSense 728x90)</span>
         <ins class="adsbygoogle"
              style="display:block; width:100%; height:90px;"
              data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
@@ -89,59 +91,64 @@
 
     <!-- Right: Explorer Playlist Section (5 cols) -->
     <section class="lg:col-span-5 flex flex-col gap-4">
-      <div class="bg-slate-800/90 backdrop-blur rounded-xl p-4 border border-slate-700/60 shadow-lg flex-1 flex flex-col">
+      <div class="bg-slate-800/80 backdrop-blur-md rounded-2xl p-4 border border-slate-700/60 shadow-xl flex-1 flex flex-col">
         
         <!-- Folder Explorer Navigation Header -->
-        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-700/60">
-          <div id="categoryTabContainer" class="flex gap-1 overflow-x-auto custom-scrollbar flex-1 mr-2">
-            <!-- 동적으로 추가된 폴더 탭이 생성됨 -->
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-700/60 gap-2">
+          <div id="categoryTabContainer" class="flex gap-1.5 overflow-x-auto custom-scrollbar flex-1 py-1">
+            <!-- 동적 폴더 탭 생성 구역 -->
           </div>
-          <button onclick="promptCreateCategory()" class="bg-slate-700 hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg text-indigo-300 font-bold whitespace-nowrap border border-slate-600 flex items-center gap-1">
+          <button onclick="openFolderModal()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1 shrink-0 active:scale-95">
             📁 새 폴더
           </button>
         </div>
 
         <!-- Progress Header & Controls -->
-        <div class="flex flex-col gap-2 mb-3">
+        <div class="flex flex-col gap-2.5 mb-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1.5">
-              <span id="currentFolderIcon">📁</span> <span id="categoryTitle">전체 탐색기</span>
+              <span>📁</span> <span id="categoryTitle">전체 탐색기</span>
             </h3>
             <span id="progressText" class="text-xs text-slate-400 font-mono">0 / 0 (0%)</span>
           </div>
 
           <!-- Total Count Badge -->
-          <div class="flex justify-between items-center text-xs text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
-            <span>총 수집 강좌: <strong id="totalCountBadge" class="text-indigo-400">0</strong>개</span>
+          <div class="flex justify-between items-center text-xs text-slate-400 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700/40">
+            <span>등록 강좌 총 <strong id="totalCountBadge" class="text-indigo-400">0</strong>개</span>
             <span id="categoryCountBadge" class="text-slate-400 text-[11px]">현재 폴더: 0개</span>
           </div>
 
           <!-- Progress Bar -->
-          <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
-            <div id="progressBar" class="bg-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+          <div class="w-full bg-slate-700/80 rounded-full h-2 overflow-hidden">
+            <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
           </div>
 
-          <!-- Expanded Sort Modes -->
+          <!-- Expanded 10 Sort Modes -->
           <div class="pt-1">
-            <select id="sortOption" onchange="renderPlaylist()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg p-2 w-full focus:outline-none focus:border-indigo-500">
+            <select id="sortOption" onchange="renderPlaylist()" class="bg-slate-900 border border-slate-700/80 text-xs text-slate-200 rounded-xl p-2.5 w-full focus:outline-none focus:border-indigo-500 font-medium">
               <option value="natural-asc">🔢 자연어 오름차순 (1 ➔ 2 ➔ 10 정렬)</option>
               <option value="natural-desc">🔢 자연어 내림차순 (10 ➔ 2 ➔ 1 정렬)</option>
+              <option value="title-asc">🔤 제목 가나다순 (A-Z / ㄱ-ㅎ)</option>
+              <option value="title-desc">🔤 제목 역순 (Z-A / ㅎ-ㄱ)</option>
               <option value="original">📋 수집 등록 순서대로</option>
-              <option value="recent">🔄 최근 등록한 순서대로</option>
-              <option value="random">🔀 무작위 셔플 (복습/기출용)</option>
+              <option value="recent">🔄 최근 수집한 순서대로 (최신순)</option>
+              <option value="uncompleted-first">⚡ 미완료 수강 우선 정렬 (안 본 것부터)</option>
+              <option value="completed-first">🏆 완료 수강 우선 정렬 (완강부터)</option>
+              <option value="random">🔀 무작위 셔플 (복습/기출 문제용)</option>
+              <option value="length">⏱️ 제목 길이 순서대로</option>
             </select>
           </div>
         </div>
 
-        <!-- Video Item List -->
+        <!-- Video Item List (Drag & Drop Supported) -->
         <div id="playlistContainer" class="flex-1 overflow-y-auto max-h-[420px] space-y-2 pr-1 custom-scrollbar">
         </div>
 
       </div>
 
       <!-- AdSense Sidebar Slot -->
-      <div class="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[180px] text-center">
-        <span class="text-xs text-slate-500 mb-1">광고 영역 (AdSense 300x250)</span>
+      <div class="bg-slate-800/40 border border-dashed border-slate-700/60 rounded-2xl p-3 flex flex-col items-center justify-center min-h-[180px] text-center">
+        <span class="text-xs text-slate-500 mb-1 font-medium">광고 영역 (AdSense 300x250)</span>
         <ins class="adsbygoogle"
              style="display:block; width:100%; height:180px;"
              data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
@@ -151,47 +158,50 @@
     </section>
   </main>
 
-  <!-- 수집 및 URL 입력 모달 (Modal) -->
-  <div id="importModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 max-w-lg w-full shadow-2xl flex flex-col gap-4">
+  <!-- 1. 새 폴더 추가 모달 -->
+  <div id="folderModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-6 max-w-sm w-full shadow-2xl flex flex-col gap-4">
+      <h3 class="font-bold text-base text-white flex items-center gap-2" id="folderModalTitle">📁 새 폴더 만들기</h3>
+      <input type="text" id="folderNameInput" placeholder="폴더 이름 (예: 1과목. 정보전송일반)" class="bg-slate-900 border border-slate-700 text-xs text-slate-100 p-3 rounded-xl focus:border-indigo-500 outline-none w-full">
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeFolderModal()" class="bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-xl font-medium">취소</button>
+        <button onclick="saveFolder()" class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl font-bold">저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 강좌 수집 모달 -->
+  <div id="importModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700/80 rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-slate-700 pb-3">
-        <h3 class="font-bold text-base text-white flex items-center gap-2">
-          📥 강좌 대량 수집 및 폴더 지정
-        </h3>
+        <h3 class="font-bold text-base text-white flex items-center gap-2">📥 강좌 대량 수집 및 폴더 지정</h3>
         <button onclick="closeImportModal()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs text-slate-300 font-medium">1. 수집 대상 저장 폴더 선택</label>
-        <select id="modalCategorySelect" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none">
-          <!-- 동적 폴더 목록이 들어감 -->
+        <label class="text-xs text-slate-300 font-medium">1. 저장할 폴더 선택</label>
+        <select id="modalCategorySelect" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-3 rounded-xl focus:border-indigo-500 outline-none">
         </select>
       </div>
 
-      <!-- 멤버십 영상 제외 설정 토글 -->
-      <div class="bg-slate-900/80 p-3 rounded-lg border border-slate-700/60 flex items-center justify-between">
+      <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 flex items-center justify-between">
         <div class="flex flex-col">
           <span class="text-xs font-bold text-slate-200">🔒 멤버십(유료 회원 전용) 영상 제외</span>
-          <span class="text-[11px] text-slate-400">제목에 '멤버십', '회원전용' 포함 시 자동 걸러냄 (기본: 제외)</span>
+          <span class="text-[11px] text-slate-400">제목에 '멤버십', '회원전용' 포함 시 자동 제외 (기본값: 제외)</span>
         </div>
         <input type="checkbox" id="excludeMembershipCheck" checked class="w-4 h-4 accent-indigo-600 rounded cursor-pointer">
       </div>
 
       <div class="flex flex-col gap-2">
-        <label class="text-xs text-slate-300 font-medium">
-          2. 유튜브 URL 또는 커뮤니티 글 붙여넣기 
-          <span class="text-slate-500 font-normal">(글 뭉치 전체 복사 후 붙여넣기 가능)</span>
-        </label>
-        <textarea id="modalTextInput" rows="5" placeholder="예시:&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ&#10;10. OSI 7계층 - https://youtu.be/fJ9rUzIMcZQ" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-3 rounded-lg focus:border-indigo-500 outline-none font-mono custom-scrollbar"></textarea>
+        <label class="text-xs text-slate-300 font-medium">2. 유튜브 URL 또는 커뮤니티 글 붙여넣기</label>
+        <textarea id="modalTextInput" rows="5" placeholder="글 전체 복사 붙여넣기 가능:&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-3 rounded-xl focus:border-indigo-500 outline-none font-mono custom-scrollbar"></textarea>
       </div>
 
       <div class="flex items-center justify-between pt-2 border-t border-slate-700">
-        <button onclick="clearAllVideos()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 font-medium">
-          🗑️ 전체 강좌 초기화
-        </button>
+        <button onclick="clearAllVideos()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 font-medium">🗑️ 전체 수집 데이터 초기화</button>
         <div class="flex gap-2">
-          <button onclick="closeImportModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs px-4 py-2 rounded-lg font-medium">취소</button>
-          <button onclick="processImportText()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded-lg font-bold">🚀 수집 실행</button>
+          <button onclick="closeImportModal()" class="bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-xl font-medium">취소</button>
+          <button onclick="processImportText()" class="bg-indigo-600 text-white text-xs px-4 py-2 rounded-xl font-bold">🚀 수집 실행</button>
         </div>
       </div>
     </div>
@@ -199,7 +209,6 @@
 
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    // 완전 깨끗한 데이터 (0개로 시작)
     let allVideos = JSON.parse(localStorage.getItem('custom_all_videos') || '[]');
     let categories = JSON.parse(localStorage.getItem('custom_categories') || '[]');
     
@@ -207,6 +216,7 @@
     let currentIndex = 0;
     let currentCategory = 'all';
     let completedList = JSON.parse(localStorage.getItem('completed_videos') || '[]');
+    let editingCategory = null;
 
     function onYouTubeIframeAPIReady() {
       renderCategories();
@@ -225,6 +235,7 @@
       }
     }
 
+    // 폴더 UI 렌더링 (수정/삭제 버튼 포함)
     function renderCategories() {
       const tabContainer = document.getElementById('categoryTabContainer');
       const selectContainer = document.getElementById('modalCategorySelect');
@@ -232,32 +243,34 @@
       tabContainer.innerHTML = '';
       selectContainer.innerHTML = '';
 
-      // 전체 탭
       const allTab = document.createElement('button');
       allTab.onclick = () => selectCategory('all');
-      allTab.id = 'tab-all';
-      allTab.className = `category-tab px-3 py-1.5 text-xs rounded-lg font-medium whitespace-nowrap ${currentCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`;
+      allTab.className = `category-tab px-3 py-1.5 text-xs rounded-xl font-medium whitespace-nowrap transition ${currentCategory === 'all' ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-700/70 text-slate-300 hover:bg-slate-600'}`;
       allTab.innerText = '📂 전체 보기';
       tabContainer.appendChild(allTab);
 
-      // 사용자 동적 폴더 탭 생성
       categories.forEach(cat => {
         const tabWrapper = document.createElement('div');
-        tabWrapper.className = 'flex items-center gap-1 bg-slate-700 rounded-lg pr-1';
-        if (currentCategory === cat) tabWrapper.className = 'flex items-center gap-1 bg-indigo-600 rounded-lg pr-1';
+        tabWrapper.className = `flex items-center gap-1 rounded-xl pr-1.5 transition ${currentCategory === cat ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-700/70 text-slate-300 hover:bg-slate-600'}`;
 
         const tab = document.createElement('button');
         tab.onclick = () => selectCategory(cat);
-        tab.id = `tab-${cat}`;
-        tab.className = `category-tab px-3 py-1.5 text-xs font-medium whitespace-nowrap ${currentCategory === cat ? 'text-white' : 'text-slate-300 hover:text-white'}`;
+        tab.className = 'px-2.5 py-1.5 text-xs font-medium whitespace-nowrap';
         tab.innerText = `📁 ${cat}`;
         tabWrapper.appendChild(tab);
 
-        // 폴더 삭제 버튼 (x)
+        // 수정 버튼
+        const editBtn = document.createElement('button');
+        editBtn.onclick = (e) => { e.stopPropagation(); openFolderModal(cat); };
+        editBtn.className = 'text-[11px] text-slate-300 hover:text-white px-0.5 opacity-70 hover:opacity-100';
+        editBtn.innerText = '✏️';
+        tabWrapper.appendChild(editBtn);
+
+        // 삭제 버튼
         const delBtn = document.createElement('button');
         delBtn.onclick = (e) => { e.stopPropagation(); deleteCategory(cat); };
-        delBtn.className = 'text-xs text-slate-400 hover:text-rose-400 px-1 font-bold';
-        delBtn.innerText = '×';
+        delBtn.className = 'text-[11px] text-slate-300 hover:text-rose-300 px-0.5 font-bold opacity-70 hover:opacity-100';
+        delBtn.innerText = '✕';
         tabWrapper.appendChild(delBtn);
 
         tabContainer.appendChild(tabWrapper);
@@ -269,19 +282,48 @@
       });
     }
 
-    function promptCreateCategory() {
-      const name = prompt('새로 만드실 폴더(과목) 이름을 입력하세요:', '');
-      if (name && name.trim()) {
-        const trimmed = name.trim();
-        if (!categories.includes(trimmed)) {
-          categories.push(trimmed);
-          localStorage.setItem('custom_categories', JSON.stringify(categories));
-          renderCategories();
-          selectCategory(trimmed);
-        } else {
-          alert('이미 존재하는 폴더 이름입니다.');
-        }
+    function openFolderModal(catName = null) {
+      editingCategory = catName;
+      document.getElementById('folderModalTitle').innerText = catName ? `✏️ 폴더 이름 수정` : `📁 새 폴더 만들기`;
+      document.getElementById('folderNameInput').value = catName || '';
+      document.getElementById('folderModal').classList.remove('hidden');
+      document.getElementById('folderModal').classList.add('flex');
+    }
+
+    function closeFolderModal() {
+      document.getElementById('folderModal').classList.remove('flex');
+      document.getElementById('folderModal').classList.add('hidden');
+      editingCategory = null;
+    }
+
+    function saveFolder() {
+      const input = document.getElementById('folderNameInput').value.trim();
+      if (!input) {
+        alert('폴더 이름을 입력해 주세요.');
+        return;
       }
+
+      if (editingCategory) {
+        // 이름 수정
+        const index = categories.indexOf(editingCategory);
+        if (index !== -1) {
+          categories[index] = input;
+          allVideos.forEach(v => { if (v.category === editingCategory) v.category = input; });
+        }
+      } else {
+        // 새 폴더 추가
+        if (categories.includes(input)) {
+          alert('이미 존재해! 다른 이름을 사용해 줘.');
+          return;
+        }
+        categories.push(input);
+      }
+
+      localStorage.setItem('custom_categories', JSON.stringify(categories));
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      closeFolderModal();
+      renderCategories();
+      selectCategory(input);
     }
 
     function deleteCategory(catName) {
@@ -296,7 +338,7 @@
 
     function openImportModal() {
       if (categories.length === 0) {
-        alert('먼저 [📁 새 폴더] 버튼을 눌러 강좌를 넣을 폴더를 하나 이상 작성해 주세요!');
+        alert('먼저 [📁 새 폴더] 버튼을 눌러 강좌를 저장할 폴더를 하나 작성해 주세요!');
         return;
       }
       renderCategories();
@@ -326,7 +368,6 @@
       lines.forEach(line => {
         if (!line.trim()) return;
 
-        // 멤버십 감지 및 제외 체크
         const isMembership = /멤버십|회원전용|members-only/i.test(line);
         if (excludeMembership && isMembership) {
           membershipSkipped++;
@@ -353,7 +394,7 @@
       document.getElementById('modalTextInput').value = '';
       
       selectCategory(targetCategory);
-      let alertMsg = `🎉 성공! '${targetCategory}' 폴더에 총 ${addedCount}개의 동영상이 추가되었습니다.`;
+      let alertMsg = `🎉 성공! '${targetCategory}' 폴더에 총 ${addedCount}개의 동영상이 수집되었습니다.`;
       if (membershipSkipped > 0) alertMsg += `\n(🔒 멤버십 차단 필터로 ${membershipSkipped}개 제외됨)`;
       alert(alertMsg);
     }
@@ -372,7 +413,7 @@
       currentIndex = 0;
       renderCategories();
 
-      document.getElementById('categoryTitle').innerText = category === 'all' ? '전체 폴더' : `${category}`;
+      document.getElementById('categoryTitle').innerText = category === 'all' ? '전체 탐색기' : `${category}`;
 
       const filtered = getFilteredVideos();
       if (filtered.length > 0 && player && player.loadVideoById) {
@@ -381,6 +422,7 @@
       renderPlaylist();
     }
 
+    // 10종 스마트 정렬 엔진
     function getFilteredVideos() {
       let list = currentCategory === 'all' 
         ? [...allVideos] 
@@ -392,15 +434,26 @@
         list.sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' }));
       } else if (sortType === 'natural-desc') {
         list.sort((a, b) => b.title.localeCompare(a.title, undefined, { numeric: true, sensitivity: 'base' }));
+      } else if (sortType === 'title-asc') {
+        list.sort((a, b) => a.title.localeCompare(b.title));
+      } else if (sortType === 'title-desc') {
+        list.sort((a, b) => b.title.localeCompare(a.title));
       } else if (sortType === 'recent') {
         list.reverse();
+      } else if (sortType === 'uncompleted-first') {
+        list.sort((a, b) => (completedList.includes(a.id) ? 1 : 0) - (completedList.includes(b.id) ? 1 : 0));
+      } else if (sortType === 'completed-first') {
+        list.sort((a, b) => (completedList.includes(b.id) ? 1 : 0) - (completedList.includes(a.id) ? 1 : 0));
       } else if (sortType === 'random') {
         list.sort(() => Math.random() - 0.5);
+      } else if (sortType === 'length') {
+        list.sort((a, b) => a.title.length - b.title.length);
       }
 
       return list;
     }
 
+    // 플레이리스트 렌더링 & 드래그 앤 드롭 등록
     function renderPlaylist() {
       const videos = getFilteredVideos();
       const container = document.getElementById('playlistContainer');
@@ -413,8 +466,8 @@
 
       if (videos.length === 0) {
         container.innerHTML = `
-          <div class="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-lg">
-            이 폴더에 수집된 강좌가 없습니다.<br><br>1. 먼저 상단 <strong class="text-indigo-400">[📁 새 폴더]</strong>로 폴더를 생성하세요.<br>2. <strong class="text-indigo-400">[➕ 강좌/링크 수집하기]</strong>로 유튜브 링크를 붙여넣으세요!
+          <div class="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
+            이 폴더에 수집된 강좌가 없습니다.<br><br>1. 상단 <strong class="text-indigo-400">[📁 새 폴더]</strong>로 폴더를 생성하세요.<br>2. <strong class="text-indigo-400">[➕ 강좌 대량 수집]</strong> 버튼으로 링크를 붙여넣으세요!
           </div>
         `;
       } else {
@@ -424,18 +477,34 @@
           if (isCompleted) completedCount++;
 
           const item = document.createElement('div');
-          item.className = `p-3 rounded-lg border cursor-pointer transition flex items-center justify-between gap-2 ${
-            isActive ? 'bg-indigo-950/80 border-indigo-500/80 text-white' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-700/50'
+          item.className = `p-3 rounded-xl border draggable-item transition flex items-center justify-between gap-2.5 ${
+            isActive ? 'bg-indigo-950/80 border-indigo-500/80 text-white shadow-lg' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-700/50'
           }`;
+          item.draggable = true;
+          item.dataset.index = idx;
+
+          // 드래그 앤 드롭 이벤트
+          item.ondragstart = (e) => e.dataTransfer.setData('text/plain', idx);
+          item.ondragover = (e) => e.preventDefault();
+          item.ondrop = (e) => {
+            e.preventDefault();
+            const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+            const toIdx = idx;
+            moveVideoPosition(fromIdx, toIdx);
+          };
+
           item.onclick = () => playVideoIndex(idx);
 
           item.innerHTML = `
-            <div class="flex items-center gap-3 min-w-0">
-              <span class="text-xs font-mono px-2 py-0.5 rounded ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
-              <span class="text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
-              ${vid.isMembership ? '<span class="text-[10px] bg-amber-900/80 text-amber-300 px-1.5 py-0.5 rounded border border-amber-600/40">멤버십</span>' : ''}
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="text-slate-500 hover:text-slate-300 font-mono text-xs cursor-grab">≡</span>
+              <span class="text-xs font-mono px-2 py-0.5 rounded-md ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
+              <span class="text-xs font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
             </div>
-            <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-indigo-400' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : '대기'}</span>
+            <div class="flex items-center gap-2 shrink-0">
+              <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-indigo-400' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : ''}</span>
+              <button onclick="event.stopPropagation(); deleteSingleVideo('${vid.id}')" class="text-xs text-slate-500 hover:text-rose-400 font-bold px-1">✕</button>
+            </div>
           `;
           container.appendChild(item);
         });
@@ -446,12 +515,29 @@
         document.getElementById('currentStatus').innerText = `재생 중 (${currentIndex + 1}/${videos.length})`;
       } else {
         document.getElementById('currentTitle').innerText = '선택된 강좌가 없습니다.';
-        document.getElementById('currentStatus').innerText = '대기 중';
+        document.getElementById('currentStatus').innerText = '재생 대기 중';
       }
 
       const percent = videos.length > 0 ? Math.round((completedCount / videos.length) * 100) : 0;
       document.getElementById('progressBar').style.width = `${percent}%`;
       document.getElementById('progressText').innerText = `${completedCount} / ${videos.length} (${percent}%)`;
+    }
+
+    function moveVideoPosition(fromIdx, toIdx) {
+      const videos = getFilteredVideos();
+      const movedItem = videos.splice(fromIdx, 1)[0];
+      videos.splice(toIdx, 0, movedItem);
+      allVideos = videos;
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      renderPlaylist();
+    }
+
+    function deleteSingleVideo(vidId) {
+      if (confirm('이 강좌를 목록에서 삭제하시겠습니까?')) {
+        allVideos = allVideos.filter(v => v.id !== vidId);
+        localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+        renderPlaylist();
+      }
     }
 
     function playVideoIndex(idx) {
@@ -496,15 +582,11 @@
     }
 
     function exportProgress() {
-      const exportData = {
-        videos: allVideos,
-        categories: categories,
-        completed: completedList
-      };
+      const exportData = { videos: allVideos, categories: categories, completed: completedList };
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `my_study_explorer_${new Date().toISOString().slice(0,10)}.json`);
+      downloadAnchor.setAttribute("download", `study_explorer_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -517,21 +599,12 @@
       reader.onload = function(e) {
         try {
           const imported = JSON.parse(e.target.result);
-          if (imported.videos) {
-            allVideos = imported.videos;
-            localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
-          }
-          if (imported.categories) {
-            categories = imported.categories;
-            localStorage.setItem('custom_categories', JSON.stringify(categories));
-          }
-          if (imported.completed) {
-            completedList = imported.completed;
-            localStorage.setItem('completed_videos', JSON.stringify(completedList));
-          }
+          if (imported.videos) { allVideos = imported.videos; localStorage.setItem('custom_all_videos', JSON.stringify(allVideos)); }
+          if (imported.categories) { categories = imported.categories; localStorage.setItem('custom_categories', JSON.stringify(categories)); }
+          if (imported.completed) { completedList = imported.completed; localStorage.setItem('completed_videos', JSON.stringify(completedList)); }
           renderCategories();
           renderPlaylist();
-          alert('세이브 파일(탐색기 폴더 + 강좌 목록 + 완강 기록)이 성공적으로 복구되었습니다!');
+          alert('세이브 파일이 완벽히 복구되었습니다!');
         } catch (err) {
           alert('올바른 세이브 파일이 아닙니다.');
         }
