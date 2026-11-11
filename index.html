@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>유튜브 순차 학습 플레이어</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .aspect-video-container { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; }
+    .aspect-video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
+
+  <!-- Header -->
+  <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex flex-wrap justify-between items-center gap-2">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-graduation-cap text-indigo-400 text-2xl"></i>
+      <h1 class="font-bold text-lg text-white">유튜브 순차 학습 플레이어</h1>
+      <span class="bg-indigo-900/60 text-indigo-300 text-xs px-2.5 py-1 rounded-full border border-indigo-700/50">@specialist1</span>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="sharePlayer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+        <i class="fa-solid fa-share-nodes"></i> 공유하기
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-7xl mx-auto w-full">
+    
+    <!-- Left: Player Section (7 cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-4">
+      <div class="bg-black rounded-xl shadow-lg overflow-hidden border border-slate-800">
+        <div class="aspect-video-container">
+          <div id="player"></div>
+        </div>
+      </div>
+
+      <!-- Player Controls & Current Info -->
+      <div class="bg-slate-800/80 backdrop-blur rounded-xl p-4 border border-slate-700/60 shadow-md">
+        <div class="flex flex-col gap-2">
+          <span id="currentStatus" class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">재생 준비 완료</span>
+          <h2 id="currentTitle" class="text-base font-bold text-white line-clamp-2">강의를 선택해 주세요</h2>
+        </div>
+
+        <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-700/50">
+          <button onclick="playPrev()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-backward"></i> 이전
+          </button>
+          <button id="completeBtn" onclick="toggleCompleteCurrent()" class="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 text-sm px-4 py-2 rounded-lg flex items-center gap-2 transition">
+            <i class="fa-solid fa-check"></i> 수강 완료
+          </button>
+          <button onclick="playNext()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-sm px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition">
+            다음 <i class="fa-solid fa-forward"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Google AdSense Slot (Desktop Bottom Banner - 728x90 Area) -->
+      <div class="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[100px] text-center">
+        <span class="text-xs text-slate-500 mb-1">광고 영역 (AdSense)</span>
+        <!-- 구글 애드센스 코드 위치 -->
+        <ins class="adsbygoogle"
+             style="display:block; width:100%; height:90px;"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="1234567890"
+             data-ad-format="horizontal"></ins>
+      </div>
+    </section>
+
+    <!-- Right: Curriculum & Playlist (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
+      <div class="bg-slate-800/80 backdrop-blur rounded-xl p-4 border border-slate-700/60 shadow-md flex-1 flex flex-col">
+        
+        <!-- Controls & Filter Header -->
+        <div class="flex flex-col gap-3 mb-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-list-ol text-indigo-400"></i> 커리큘럼 리스트
+            </h3>
+            <span id="progressText" class="text-xs text-slate-400 font-mono">0 / 0 (0%)</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+            <div id="progressBar" class="bg-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+
+          <!-- Sort Select -->
+          <div class="flex gap-2 pt-1">
+            <select id="sortOption" onchange="renderPlaylist()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg p-2 flex-1 focus:outline-none focus:border-indigo-500">
+              <option value="natural">🔢 제목순 (1, 2, 3... 10 오름차순)</option>
+              <option value="original">📋 등록 순서대로</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Video Item List -->
+        <div id="playlistContainer" class="flex-1 overflow-y-auto max-h-[450px] space-y-2 pr-1 custom-scrollbar">
+          <!-- Dynamically Generated Items -->
+        </div>
+
+      </div>
+
+      <!-- Google AdSense Slot (Right Sidebar Banner - 300x250 Area) -->
+      <div class="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-3 flex flex-col items-center justify-center min-h-[200px] text-center">
+        <span class="text-xs text-slate-500 mb-1">광고 영역 (AdSense Sidebar)</span>
+        <!-- 구글 애드센스 코드 위치 -->
+        <ins class="adsbygoogle"
+             style="display:block; width:100%; height:200px;"
+             data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+             data-ad-slot="0987654321"
+             data-ad-format="rectangle"></ins>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script>
+    // Sample Data (@specialist1 format)
+    const initialVideos = [
+      { id: "M7lc1UVf-VE", title: "1. 정보통신 개론 - 데이터 통신 기초 개념" },
+      { id: "dQw4w9WgXcQ", title: "2. 정보통신 개론 - 전송 매체와 신호 변환" },
+      { id: "L_LUpnjgPso", title: "3. 정보통신 개론 - 변복조 방식과 오류 제어" },
+      { id: "fJ9rUzIMcZQ", title: "10. 정보통신 개론 - 프로토콜 구조와 OSI 7계층" },
+      { id: "3JZ_D3ELwOQ", title: "4. 네트워크 일반 - IP 주소 지정 및 서브넷팅" }
+    ];
+
+    let player;
+    let currentIndex = 0;
+    let completedList = JSON.parse(localStorage.getItem('completed_videos') || '[]');
+
+    function onYouTubeIframeAPIReady() {
+      player = new YT.Player('player', {
+        videoId: getSortedVideos()[0]?.id || '',
+        events: {
+          'onStateChange': onPlayerStateChange
+        }
+      });
+      renderPlaylist();
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.ENDED) {
+        markCurrentCompleted();
+        playNext();
+      }
+    }
+
+    // Natural Sort Algorithm
+    function getSortedVideos() {
+      const sortType = document.getElementById('sortOption').value;
+      if (sortType === 'natural') {
+        return [...initialVideos].sort((a, b) => {
+          return a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' });
+        });
+      }
+      return initialVideos;
+    }
+
+    function renderPlaylist() {
+      const videos = getSortedVideos();
+      const container = document.getElementById('playlistContainer');
+      container.innerHTML = '';
+
+      let completedCount = 0;
+
+      videos.forEach((vid, idx) => {
+        const isCompleted = completedList.includes(vid.id);
+        const isActive = idx === currentIndex;
+        if (isCompleted) completedCount++;
+
+        const item = document.createElement('div');
+        item.className = `p-3 rounded-lg border cursor-pointer transition flex items-center justify-between gap-2 ${
+          isActive ? 'bg-indigo-950/80 border-indigo-500/80 text-white' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-700/50'
+        }`;
+        item.onclick = () => playVideoIndex(idx);
+
+        item.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="text-xs font-mono px-2 py-0.5 rounded ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
+            <span class="text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
+          </div>
+          <i class="fa-solid ${isCompleted ? 'fa-circle-check text-emerald-400' : isActive ? 'fa-circle-play text-indigo-400' : 'fa-circle text-slate-700'} text-base"></i>
+        `;
+        container.appendChild(item);
+      });
+
+      // Update Current Video Info & Progress
+      if (videos[currentIndex]) {
+        document.getElementById('currentTitle').innerText = videos[currentIndex].title;
+        document.getElementById('currentStatus').innerText = `재생 중 (${currentIndex + 1}/${videos.length})`;
+      }
+
+      const percent = Math.round((completedCount / videos.length) * 100) || 0;
+      document.getElementById('progressBar').style.width = `${percent}%`;
+      document.getElementById('progressText').innerText = `${completedCount} / ${videos.length} (${percent}%)`;
+    }
+
+    function playVideoIndex(idx) {
+      const videos = getSortedVideos();
+      if (idx >= 0 && idx < videos.length) {
+        currentIndex = idx;
+        player.loadVideoById(videos[currentIndex].id);
+        renderPlaylist();
+      }
+    }
+
+    function playNext() {
+      const videos = getSortedVideos();
+      if (currentIndex < videos.length - 1) playVideoIndex(currentIndex + 1);
+    }
+
+    function playPrev() {
+      if (currentIndex > 0) playVideoIndex(currentIndex - 1);
+    }
+
+    function toggleCompleteCurrent() {
+      const videos = getSortedVideos();
+      const currentId = videos[currentIndex]?.id;
+      if (!currentId) return;
+
+      if (completedList.includes(currentId)) {
+        completedList = completedList.filter(id => id !== currentId);
+      } else {
+        completedList.push(currentId);
+      }
+      localStorage.setItem('completed_videos', JSON.stringify(completedList));
+      renderPlaylist();
+    }
+
+    function markCurrentCompleted() {
+      const videos = getSortedVideos();
+      const currentId = videos[currentIndex]?.id;
+      if (currentId && !completedList.includes(currentId)) {
+        completedList.push(currentId);
+        localStorage.setItem('completed_videos', JSON.stringify(completedList));
+      }
+    }
+
+    function sharePlayer() {
+      navigator.clipboard.writeText(window.location.href);
+      alert('현재 플레이어 링크가 복사되었습니다!');
+    }
+  </script>
+</body>
+</html>
