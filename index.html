@@ -54,12 +54,12 @@
     </div>
   </header>
 
-  <!-- Top User Guide Banner (Bookmarklet Guide Included) -->
+  <!-- Top User Guide Banner (Bookmarklet Guide Cleaned) -->
   <div id="helpBanner" class="bg-[#1f1b18] border-b border-amber-500/30 px-6 py-4 hidden">
     <div class="max-w-7xl mx-auto flex flex-col gap-3">
       <div class="flex justify-between items-center border-b border-amber-500/20 pb-2">
         <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">
-          💡 스마트 유튜브 대량 수집 & 북마크릿 이용 가이드
+          💡 북마크릿으로 유튜브 링크 1초 대량 수집하기
         </h3>
         <button onclick="toggleHelpBanner()" class="text-xs text-amber-400 hover:text-white font-bold whitespace-nowrap bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/40">
           닫기 ✕
@@ -86,9 +86,9 @@
         <div class="bg-[#141210] p-3 rounded-xl border border-amber-500/20 flex flex-col gap-1.5">
           <span class="font-bold text-amber-400">📌 2단계: 유튜브 페이지에서 원클릭 수집</span>
           <p>
-            1. 수집할 유튜브 채널 동영상 탭에 접속하여 마우스 휠을 아래로 내려 **강좌가 최대한 많이 보이도록 펼쳐줍니다.**<br>
-            2. 즐겨찾기 바에 등록해둔 **[📋 유튜브 링크 싹 긁기]** 버튼을 누르면 동영상 주소들이 클립보드로 자동 복사됩니다.<br>
-            3. 본 플레이어로 돌아와 **[⚡ 강좌 링크 수집]** 버튼을 누른 뒤 `Ctrl + V`로 붙여넣으시면 1초 만에 수집이 완료됩니다!
+            1. 유튜브 수재비 채널 동영상 탭에서 마우스 휠을 아래로 내려 **강좌가 최대한 많이 보이도록 펼쳐줍니다.**<br>
+            2. 즐겨찾기 바에 등록해둔 **[📋 유튜브 링크 싹 긁기]** 버튼을 누르면 화면 속 주소들이 자동 복사됩니다.<br>
+            3. 플레이어로 돌아와 **[⚡ 강좌 링크 수집]** 버튼을 누른 뒤 `Ctrl + V`로 붙여넣고 수집 실행만 누르면 끝!
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@
         <!-- Folder Chips & Inline Folder Creator Header -->
         <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#272727] gap-2">
           <div id="categoryTabContainer" class="flex gap-1.5 overflow-x-auto custom-scrollbar flex-1 py-1">
-            <!-- 동적 폴더 칩이 배치됨 -->
+            <!-- 동적 폴더 칩 배치 -->
           </div>
           <button onclick="toggleInlineFolderInput()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1 shrink-0 active:scale-95">
             + 폴더 생성
@@ -242,7 +242,7 @@
 
       <div class="flex flex-col gap-2">
         <label class="text-xs text-slate-300 font-medium">2. 복사한 링크 뭉치 붙여넣기 (Ctrl + V)</label>
-        <textarea id="modalTextInput" rows="6" placeholder="유튜브에서 긁어온 동영상 링크 뭉치나 URL을 붙여넣으세요:&#10;https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;https://youtu.be/dQw4w9WgXcQ&#10;1. 데이터 통신 기초 - https://youtu.be/fJ9rUzIMcZQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
+        <textarea id="modalTextInput" rows="6" placeholder="유튜브에서 북마크릿으로 복사한 동영상 링크 뭉치나 URL을 붙여넣으세요:&#10;https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;https://youtu.be/dQw4w9WgXcQ&#10;1. 데이터 통신 기초 - https://youtu.be/fJ9rUzIMcZQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
       </div>
 
       <div class="flex items-center justify-between pt-2 border-t border-[#272727]">
