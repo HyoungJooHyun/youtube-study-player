@@ -35,6 +35,9 @@
       </div>
     </div>
     <div class="flex items-center space-x-2">
+      <button onclick="toggleHelpBanner()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition font-bold active:scale-95">
+        📖 이용 안내
+      </button>
       <button onclick="openImportModal()" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-bold shadow-md shadow-red-600/20 active:scale-95">
         <span>⚡</span> 강좌 대량 수집
       </button>
@@ -50,6 +53,24 @@
       </button>
     </div>
   </header>
+
+  <!-- Top User Guide Banner (Toggleable) -->
+  <div id="helpBanner" class="bg-[#1f1b18] border-b border-amber-500/30 px-6 py-4 hidden">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div class="flex flex-col gap-1">
+        <h3 class="text-sm font-bold text-amber-300 flex items-center gap-2">
+          💡 유튜브 순차 학습 플레이어 스마트 이용 가이드
+        </h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          • <strong>개별 등록</strong>: 원하는 강좌 링크나 카페 게시글을 하나씩 복사해서 수집 창에 붙여넣으면 1➔2➔10 순으로 정렬됩니다.<br>
+          • <strong>채널 대량 수집</strong>: <strong class="text-red-400">[⚡ 강좌 대량 수집]</strong> 창에서 10초 스크립트 복사 후 유튜브 채널 화면 콘솔(F12)에 넣으면 전체 강좌가 한 번에 복사됩니다.
+        </p>
+      </div>
+      <button onclick="toggleHelpBanner()" class="text-xs text-amber-400 hover:text-white font-bold whitespace-nowrap bg-amber-500/20 px-3 py-1.5 rounded-lg border border-amber-500/40">
+        닫기 ✕
+      </button>
+    </div>
+  </div>
 
   <!-- Main Content -->
   <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 max-w-7xl mx-auto w-full">
@@ -107,7 +128,7 @@
           </button>
         </div>
 
-        <!-- Inline Folder Input Bar (디자인 개선: 팝업 100% 제거) -->
+        <!-- Inline Folder Input Bar -->
         <div id="inlineFolderBar" class="hidden flex-col gap-2 bg-[#212121] p-3 rounded-xl border border-red-500/30 mb-3 shadow-inner">
           <div class="flex justify-between items-center text-xs text-slate-300 font-bold">
             <span id="folderInputTitle">📂 새 폴더 이름 입력</span>
@@ -174,12 +195,29 @@
     </section>
   </main>
 
-  <!-- 강좌 수집 모달 (Modal - YouTube Red Theme) -->
+  <!-- 강좌 수집 모달 (3단계 대량/개별 수집 안내 통합) -->
   <div id="importModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-[#181818] border border-[#272727] rounded-2xl p-6 max-w-lg w-full shadow-2xl flex flex-col gap-4">
       <div class="flex justify-between items-center border-b border-[#272727] pb-3">
-        <h3 class="font-bold text-base text-white flex items-center gap-2">⚡ 강좌 대량 수집 및 폴더 지정</h3>
+        <h3 class="font-bold text-base text-white flex items-center gap-2">⚡ 강좌 대량 / 개별 수집 가이드</h3>
         <button onclick="closeImportModal()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+      </div>
+
+      <!-- 10초 대량 수집 팁 가이드 상자 -->
+      <div class="bg-[#212121] p-3.5 rounded-xl border border-red-500/30 flex flex-col gap-2 text-xs">
+        <span class="font-bold text-red-400 flex items-center gap-1">🚀 유튜브 채널 전체 강좌 10초 대량 수집 팁</span>
+        <div class="flex gap-2">
+          <a href="https://www.youtube.com/@specialist1/videos" target="_blank" class="bg-[#272727] hover:bg-[#383838] text-slate-200 px-2.5 py-1.5 rounded-lg border border-[#3f3f3f] text-[11px] font-medium flex items-center gap-1">
+            ↗️ 수재비 채널 열기
+          </a>
+          <button onclick="copyExtractScript()" class="bg-red-600/20 hover:bg-red-600/30 text-red-300 px-2.5 py-1.5 rounded-lg border border-red-500/40 text-[11px] font-bold">
+            📋 10초 추출 코드 복사
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-400 leading-normal">
+          1. 유튜브 화면에서 <strong>F12 ➡️ Console</strong>을 연 뒤 코드를 붙여넣고 <code>Enter</code>를 치면 900개 전체 주소가 자동 복사됩니다.<br>
+          2. 개별 영상은 주소나 글 뭉치를 그대로 복사해서 아래 상자에 하나씩 넣으셔도 됩니다!
+        </p>
       </div>
 
       <div class="flex flex-col gap-2">
@@ -188,7 +226,7 @@
         </select>
       </div>
 
-      <div class="bg-[#0f0f0f] p-3.5 rounded-xl border border-[#272727] flex items-center justify-between">
+      <div class="bg-[#0f0f0f] p-3 rounded-xl border border-[#272727] flex items-center justify-between">
         <div class="flex flex-col">
           <span class="text-xs font-bold text-slate-200">🔒 멤버십(유료 회원 전용) 영상 제외</span>
           <span class="text-[11px] text-slate-400">제목에 '멤버십', '회원전용' 포함 시 자동 제외 (기본값: 제외)</span>
@@ -198,11 +236,11 @@
 
       <div class="flex flex-col gap-2">
         <label class="text-xs text-slate-300 font-medium">2. 유튜브 URL 또는 커뮤니티 글 붙여넣기</label>
-        <textarea id="modalTextInput" rows="5" placeholder="글 전체 복사 붙여넣기 가능:&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
+        <textarea id="modalTextInput" rows="5" placeholder="복사한 텍스트를 그대로 붙여넣으세요 (Ctrl + V):&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 p-3 rounded-xl focus:border-red-500 outline-none font-mono custom-scrollbar"></textarea>
       </div>
 
       <div class="flex items-center justify-between pt-2 border-t border-[#272727]">
-        <button onclick="clearAllVideos()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 font-medium">🗑️ 전체 수집 데이터 초기화</button>
+        <button onclick="clearAllVideos()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 font-medium">🗑️ 전체 데이터 초기화</button>
         <div class="flex gap-2">
           <button onclick="closeImportModal()" class="bg-[#272727] text-slate-300 text-xs px-4 py-2 rounded-xl font-medium">취소</button>
           <button onclick="processImportText()" class="bg-red-600 hover:bg-red-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition shadow-lg shadow-red-600/20">🚀 수집 실행</button>
@@ -239,7 +277,17 @@
       }
     }
 
-    // 유튜브 칩 스타일 폴더 탭 렌더링
+    function toggleHelpBanner() {
+      const banner = document.getElementById('helpBanner');
+      banner.classList.toggle('hidden');
+    }
+
+    function copyExtractScript() {
+      const scriptCode = `(() => { const links = Array.from(document.querySelectorAll('a#video-title-link')).map(a => \`\${a.title} - \${a.href}\`).join('\\n'); copy(links); alert(\`🎉 성공! 총 \${links.split('\\n').length}개 동영상 주소가 복사되었습니다. 플레이어 수집 창에 붙여넣으세요!\`); })();`;
+      navigator.clipboard.writeText(scriptCode);
+      alert('📋 10초 추출 스크립트 코드가 복사 되었습니다!\n\n유튜브 화면에서 F12 ➡️ Console 창을 열고 Ctrl+V 후 Enter를 치세요!');
+    }
+
     function renderCategories() {
       const tabContainer = document.getElementById('categoryTabContainer');
       const selectContainer = document.getElementById('modalCategorySelect');
@@ -263,14 +311,12 @@
         tab.innerText = cat;
         tabWrapper.appendChild(tab);
 
-        // 인라인 수정 버튼
         const editBtn = document.createElement('button');
         editBtn.onclick = (e) => { e.stopPropagation(); editInlineFolder(cat); };
         editBtn.className = 'text-[11px] opacity-60 hover:opacity-100 px-0.5';
         editBtn.innerText = '✏️';
         tabWrapper.appendChild(editBtn);
 
-        // 인라인 삭제 버튼
         const delBtn = document.createElement('button');
         delBtn.onclick = (e) => { e.stopPropagation(); deleteCategory(cat); };
         delBtn.className = 'text-[11px] opacity-60 hover:opacity-100 hover:text-red-500 px-0.5 font-bold';
@@ -286,7 +332,6 @@
       });
     }
 
-    // 인라인 폴더 입력 바 토글
     function toggleInlineFolderInput() {
       const bar = document.getElementById('inlineFolderBar');
       editingCategory = null;
