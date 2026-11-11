@@ -25,10 +25,13 @@
       </div>
       <div>
         <h1 class="font-bold text-lg text-white leading-tight">유튜브 순차 학습 플레이어</h1>
-        <span class="text-xs text-indigo-300 font-medium">정보통신기사 1~6과목 커리큘럼</span>
+        <span class="text-xs text-indigo-300 font-medium">나만의 정보통신기기/자격증 커리큘럼</span>
       </div>
     </div>
     <div class="flex items-center space-x-2">
+      <button onclick="openImportModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-bold shadow-sm">
+        ➕ 강좌/링크 수집하기
+      </button>
       <button onclick="exportProgress()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium border border-slate-600">
         💾 세이브 다운
       </button>
@@ -36,7 +39,7 @@
         📂 세이브 로드
       </button>
       <input type="file" id="fileInput" accept=".json" onchange="importProgress(event)" class="hidden">
-      <button onclick="sharePlayer()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium shadow-sm">
+      <button onclick="sharePlayer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 transition font-medium border border-slate-600">
         🔗 공유하기
       </button>
     </div>
@@ -88,22 +91,27 @@
     <section class="lg:col-span-5 flex flex-col gap-4">
       <div class="bg-slate-800/90 backdrop-blur rounded-xl p-4 border border-slate-700/60 shadow-lg flex-1 flex flex-col">
         
-        <!-- Subject Category Tabs -->
-        <div class="flex gap-1 overflow-x-auto pb-2 mb-3 border-b border-slate-700/60 custom-scrollbar">
-          <button onclick="selectCategory('all')" id="tab-all" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-indigo-600 text-white whitespace-nowrap">전체</button>
-          <button onclick="selectCategory('1과목')" id="tab-1과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">1과목</button>
-          <button onclick="selectCategory('2과목')" id="tab-2과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">2과목</button>
-          <button onclick="selectCategory('3과목')" id="tab-3과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">3과목</button>
-          <button onclick="selectCategory('4과목')" id="tab-4과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">4과목</button>
-          <button onclick="selectCategory('5과목')" id="tab-5과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">5과목</button>
-          <button onclick="selectCategory('6과목')" id="tab-6과목" class="category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap">6과목</button>
+        <!-- Subject Category Tabs & Add Folder Button -->
+        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-700/60">
+          <div id="categoryTabContainer" class="flex gap-1 overflow-x-auto custom-scrollbar flex-1 mr-2">
+            <!-- 동적으로 과목 탭 생성됨 -->
+          </div>
+          <button onclick="promptCreateCategory()" class="bg-slate-700 hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg text-indigo-300 font-bold whitespace-nowrap border border-slate-600">
+            📁 과목 추가
+          </button>
         </div>
 
-        <!-- Progress Header -->
+        <!-- Progress Header & Stats -->
         <div class="flex flex-col gap-2 mb-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-200 text-sm" id="categoryTitle">전체 커리큘럼</h3>
             <span id="progressText" class="text-xs text-slate-400 font-mono">0 / 0 (0%)</span>
+          </div>
+
+          <!-- Total Count Badge -->
+          <div class="flex justify-between items-center text-xs text-slate-400 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
+            <span>등록 강좌 총 <strong id="totalCountBadge" class="text-indigo-400">0</strong>개</span>
+            <span id="categoryCountBadge" class="text-slate-400 text-[11px]">선택 탭: 0개</span>
           </div>
 
           <!-- Progress Bar -->
@@ -115,7 +123,7 @@
           <div class="pt-1">
             <select id="sortOption" onchange="renderPlaylist()" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg p-2 w-full focus:outline-none focus:border-indigo-500">
               <option value="natural">🔢 제목순 (1, 2, 3... 10 오름차순 정렬)</option>
-              <option value="original">📋 등록 순서대로</option>
+              <option value="original">📋 수집 순서대로</option>
             </select>
           </div>
         </div>
@@ -138,25 +146,56 @@
     </section>
   </main>
 
+  <!-- 수집 및 URL 입력 모달 (Modal) -->
+  <div id="importModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 max-w-lg w-full shadow-2xl flex flex-col gap-4">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+        <h3 class="font-bold text-base text-white flex items-center gap-2">
+          📥 강좌 대량 수집 및 과목 지정
+        </h3>
+        <button onclick="closeImportModal()" class="text-slate-400 hover:text-white font-bold text-lg">✕</button>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-slate-300 font-medium">1. 수집 대상 과목(폴더) 선택</label>
+        <select id="modalCategorySelect" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-2.5 rounded-lg focus:border-indigo-500 outline-none">
+          <!-- 동적 과목 목록 -->
+        </select>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label class="text-xs text-slate-300 font-medium">
+          2. 유튜브 URL 또는 텍스트 붙여넣기 
+          <span class="text-slate-500 font-normal">(글 뭉치나 링크 여러 개를 그대로 복사해서 붙여넣으세요)</span>
+        </label>
+        <textarea id="modalTextInput" rows="6" placeholder="예시 붙여넣기:&#10;1. 데이터 통신 기초 - https://www.youtube.com/watch?v=M7lc1UVf-VE&#10;2. 전송 매체 - https://youtu.be/dQw4w9WgXcQ&#10;10. OSI 7계층 - https://youtu.be/fJ9rUzIMcZQ" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 p-3 rounded-lg focus:border-indigo-500 outline-none font-mono custom-scrollbar"></textarea>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-700">
+        <button onclick="clearAllVideos()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1 font-medium">
+          🗑️ 전체 강좌 데이터 초기화
+        </button>
+        <div class="flex gap-2">
+          <button onclick="closeImportModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs px-4 py-2 rounded-lg font-medium">취소</button>
+          <button onclick="processImportText()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded-lg font-bold">🚀 수집 실행</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://www.youtube.com/iframe_api"></script>
   <script>
-    const allVideos = [
-      { id: "M7lc1UVf-VE", title: "1과목. 1. 정보전송일반 - 데이터 통신 기초 개념", category: "1과목" },
-      { id: "dQw4w9WgXcQ", title: "1과목. 2. 정보전송일반 - 전송 매체와 신호 변환", category: "1과목" },
-      { id: "L_LUpnjgPso", title: "1과목. 10. 정보전송일반 - 변복조 방식과 오류 제어", category: "1과목" },
-      { id: "fJ9rUzIMcZQ", title: "2과목. 1. 정보통신기기 - 유선통신기기 및 교환방식", category: "2과목" },
-      { id: "3JZ_D3ELwOQ", title: "2과목. 2. 정보통신기기 - 무선통신기기 및 구조", category: "2과목" },
-      { id: "2g811Eo7K8U", title: "3과목. 1. 정보통신네트워크 - IP 주소 지정 및 서브넷팅", category: "3과목" },
-      { id: "kJQP7kiw5Fk", title: "3과목. 10. 정보통신네트워크 - OSI 7계층 프로토콜 상세", category: "3과목" },
-      { id: "L0MK7qz13bU", title: "4과목. 1. 정보시스템운용 - 시스템 보안 및 유지보수", category: "4과목" }
-    ];
-
+    // 완전 깨끗한 상태 (초기 데이터 0개)
+    let allVideos = JSON.parse(localStorage.getItem('custom_all_videos') || '[]');
+    let categories = JSON.parse(localStorage.getItem('custom_categories') || '["1과목", "2과목", "3과목"]');
+    
     let player;
     let currentIndex = 0;
     let currentCategory = 'all';
     let completedList = JSON.parse(localStorage.getItem('completed_videos') || '[]');
 
     function onYouTubeIframeAPIReady() {
+      renderCategories();
       const filtered = getFilteredVideos();
       player = new YT.Player('player', {
         videoId: filtered[0]?.id || '',
@@ -172,15 +211,114 @@
       }
     }
 
+    function renderCategories() {
+      const tabContainer = document.getElementById('categoryTabContainer');
+      const selectContainer = document.getElementById('modalCategorySelect');
+      
+      tabContainer.innerHTML = '';
+      selectContainer.innerHTML = '';
+
+      // 전체 탭
+      const allTab = document.createElement('button');
+      allTab.onclick = () => selectCategory('all');
+      allTab.id = 'tab-all';
+      allTab.className = `category-tab px-3 py-1.5 text-xs rounded-lg font-medium whitespace-nowrap ${currentCategory === 'all' ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`;
+      allTab.innerText = '전체';
+      tabContainer.appendChild(allTab);
+
+      // 과목 탭 동적 생성
+      categories.forEach(cat => {
+        const tab = document.createElement('button');
+        tab.onclick = () => selectCategory(cat);
+        tab.id = `tab-${cat}`;
+        tab.className = `category-tab px-3 py-1.5 text-xs rounded-lg font-medium whitespace-nowrap ${currentCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`;
+        tab.innerText = cat;
+        tabContainer.appendChild(tab);
+
+        // 모달 선택 상자 동적 생성
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.innerText = cat;
+        selectContainer.appendChild(opt);
+      });
+    }
+
+    function promptCreateCategory() {
+      const name = prompt('새로 추가할 과목(폴더) 이름을 입력하세요:', '');
+      if (name && name.trim()) {
+        const trimmed = name.trim();
+        if (!categories.includes(trimmed)) {
+          categories.push(trimmed);
+          localStorage.setItem('custom_categories', JSON.stringify(categories));
+          renderCategories();
+          selectCategory(trimmed);
+        } else {
+          alert('이미 존재하는 과목 이름입니다.');
+        }
+      }
+    }
+
+    function openImportModal() {
+      renderCategories();
+      document.getElementById('importModal').classList.remove('hidden');
+      document.getElementById('importModal').classList.add('flex');
+    }
+
+    function closeImportModal() {
+      document.getElementById('importModal').classList.remove('flex');
+      document.getElementById('importModal').classList.add('hidden');
+    }
+
+    function processImportText() {
+      const rawText = document.getElementById('modalTextInput').value;
+      const targetCategory = document.getElementById('modalCategorySelect').value;
+      if (!rawText.trim()) {
+        alert('유튜브 URL이나 텍스트를 입력해 주세요!');
+        return;
+      }
+
+      const lines = rawText.split('\n');
+      let addedCount = 0;
+
+      lines.forEach(line => {
+        if (!line.trim()) return;
+        
+        const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const match = line.match(regExp);
+
+        if (match && match[1]) {
+          const vidId = match[1];
+          let title = line.replace(/https?:\/\/[^\s]+/g, '').trim();
+          if (!title) title = `${targetCategory}. 수집 영상 (${vidId})`;
+
+          if (!allVideos.some(v => v.id === vidId)) {
+            allVideos.push({ id: vidId, title: title, category: targetCategory });
+            addedCount++;
+          }
+        }
+      });
+
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      closeImportModal();
+      document.getElementById('modalTextInput').value = '';
+      
+      selectCategory(targetCategory);
+      alert(`🎉 성공! '${targetCategory}' 과목에 총 ${addedCount}개의 동영상이 수집되었습니다.`);
+    }
+
+    function clearAllVideos() {
+      if (confirm('수집된 모든 강좌 목록을 초기화하시겠습니까?')) {
+        allVideos = [];
+        localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+        closeImportModal();
+        renderPlaylist();
+      }
+    }
+
     function selectCategory(category) {
       currentCategory = category;
       currentIndex = 0;
-      
-      document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.className = 'category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-slate-700 text-slate-300 hover:bg-slate-600 whitespace-nowrap';
-      });
-      const selectedTab = document.getElementById(`tab-${category}`);
-      if (selectedTab) selectedTab.className = 'category-tab px-3 py-1.5 text-xs rounded-lg font-medium bg-indigo-600 text-white whitespace-nowrap';
+      renderCategories();
 
       document.getElementById('categoryTitle').innerText = category === 'all' ? '전체 커리큘럼' : `${category} 강좌`;
 
@@ -210,30 +348,44 @@
 
       let completedCount = 0;
 
-      videos.forEach((vid, idx) => {
-        const isCompleted = completedList.includes(vid.id);
-        const isActive = idx === currentIndex;
-        if (isCompleted) completedCount++;
+      document.getElementById('totalCountBadge').innerText = allVideos.length;
+      document.getElementById('categoryCountBadge').innerText = `${currentCategory === 'all' ? '전체' : currentCategory}: ${videos.length}개`;
 
-        const item = document.createElement('div');
-        item.className = `p-3 rounded-lg border cursor-pointer transition flex items-center justify-between gap-2 ${
-          isActive ? 'bg-indigo-950/80 border-indigo-500/80 text-white' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-700/50'
-        }`;
-        item.onclick = () => playVideoIndex(idx);
-
-        item.innerHTML = `
-          <div class="flex items-center gap-3 min-w-0">
-            <span class="text-xs font-mono px-2 py-0.5 rounded ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
-            <span class="text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
+      if (videos.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-500 text-xs border border-dashed border-slate-800 rounded-lg">
+            수집된 강좌가 없습니다.<br><br>상단 <strong class="text-indigo-400">[➕ 강좌/링크 수집하기]</strong> 버튼을 눌러<br>유튜브 링크나 카페 글을 복사해 넣으세요!
           </div>
-          <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-indigo-400' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : '대기'}</span>
         `;
-        container.appendChild(item);
-      });
+      } else {
+        videos.forEach((vid, idx) => {
+          const isCompleted = completedList.includes(vid.id);
+          const isActive = idx === currentIndex;
+          if (isCompleted) completedCount++;
+
+          const item = document.createElement('div');
+          item.className = `p-3 rounded-lg border cursor-pointer transition flex items-center justify-between gap-2 ${
+            isActive ? 'bg-indigo-950/80 border-indigo-500/80 text-white' : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-700/50'
+          }`;
+          item.onclick = () => playVideoIndex(idx);
+
+          item.innerHTML = `
+            <div class="flex items-center gap-3 min-w-0">
+              <span class="text-xs font-mono px-2 py-0.5 rounded ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}">${idx + 1}</span>
+              <span class="text-sm font-medium truncate ${isCompleted ? 'line-through text-slate-500' : ''}">${vid.title}</span>
+            </div>
+            <span class="text-xs ${isCompleted ? 'text-emerald-400 font-bold' : isActive ? 'text-indigo-400' : 'text-slate-600'}">${isCompleted ? '✓ 완료' : isActive ? '▶ 재생중' : '대기'}</span>
+          `;
+          container.appendChild(item);
+        });
+      }
 
       if (videos[currentIndex]) {
         document.getElementById('currentTitle').innerText = videos[currentIndex].title;
         document.getElementById('currentStatus').innerText = `재생 중 (${currentIndex + 1}/${videos.length})`;
+      } else {
+        document.getElementById('currentTitle').innerText = '선택된 강좌가 없습니다.';
+        document.getElementById('currentStatus').innerText = '대기 중';
       }
 
       const percent = videos.length > 0 ? Math.round((completedCount / videos.length) * 100) : 0;
@@ -283,10 +435,15 @@
     }
 
     function exportProgress() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(completedList));
+      const exportData = {
+        videos: allVideos,
+        categories: categories,
+        completed: completedList
+      };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `study_progress_${new Date().toISOString().slice(0,10)}.json`);
+      downloadAnchor.setAttribute("download", `my_study_backup_${new Date().toISOString().slice(0,10)}.json`);
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
@@ -298,10 +455,22 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          completedList = JSON.parse(e.target.result);
-          localStorage.setItem('completed_videos', JSON.stringify(completedList));
+          const imported = JSON.parse(e.target.result);
+          if (imported.videos) {
+            allVideos = imported.videos;
+            localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+          }
+          if (imported.categories) {
+            categories = imported.categories;
+            localStorage.setItem('custom_categories', JSON.stringify(categories));
+          }
+          if (imported.completed) {
+            completedList = imported.completed;
+            localStorage.setItem('completed_videos', JSON.stringify(completedList));
+          }
+          renderCategories();
           renderPlaylist();
-          alert('세이브 파일이 정상적으로 로드되었습니다!');
+          alert('세이브 파일(과목 구성 + 강좌 목록 + 완강 기록)이 성공적으로 복구되었습니다!');
         } catch (err) {
           alert('올바른 세이브 파일이 아닙니다.');
         }
