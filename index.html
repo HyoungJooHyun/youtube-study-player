@@ -273,6 +273,7 @@
             <select id="sortOption" onchange="renderPlaylist()" class="bg-[#0f0f0f] border border-[#272727] text-xs text-slate-200 rounded-xl p-2.5 w-full focus:outline-none focus:border-red-500 font-medium">
               <option value="natural-asc" selected>🔢 자연어 오름차순 (1 ➔ 2 ➔ 10 ➔ 100 정렬)</option>
               <option value="natural-desc">🔢 자연어 내림차순 (100 ➔ 10 ➔ 2 ➔ 1 정렬)</option>
+              <option value="moved-asc">📁 폴더에 옮긴 순서대로</option>
               <option value="title-asc">🔤 제목 가나다순 (A-Z / ㄱ-ㅎ)</option>
               <option value="title-desc">🔤 제목 역순 (Z-A / ㅎ-ㄱ)</option>
               <option value="original">📋 수집 등록 순서대로</option>
@@ -1753,6 +1754,141 @@
       selectedVideoIds = [];
       renderCategories();
       renderPlaylist();
+    }
+
+    function isUnauthorizedError(error) {
+      return error?.status === 401 || error?.result?.error?.code === 401 || error?.code === 401;
+    }
+
+    function requestDriveAccessToken(prompt) {
+      return new Promise((resolve, reject) => {
+        if (!tokenClient) { reject(new Error('Google 인증 모듈이 아직 준비되지 않았습니다.')); return; }
+        tokenClient.callback = response => response?.error ? reject(response) : resolve(response);
+        try {
+          tokenClient.requestAccessToken({ prompt });
+        } catch (error) {
+          reject(error);
+        }
+      });
+    }
+
+    async function ensureDriveAccessToken(forceRefresh = false) {
+      const token = typeof gapi !== 'undefined' && gapi.client ? gapi.client.getToken() : null;
+      if (token && !forceRefresh) return;
+      try {
+        await requestDriveAccessToken('');
+      } catch (silentError) {
+        // Only show the account picker when a silent refresh cannot be completed.
+        await requestDriveAccessToken('consent');
+      }
+    }
+
+    async function withDriveTokenRetry(work) {
+      await ensureDriveAccessToken();
+      try {
+        return await work();
+      } catch (error) {
+        if (!isUnauthorizedError(error)) throw error;
+        await ensureDriveAccessToken(true);
+        return work();
+      }
+    }
+
+    async function findOrCreateDriveFile() {
+      return withDriveTokenRetry(async () => {
+        const response = await gapi.client.drive.files.list({
+          q: `name='${DRIVE_FILE_NAME}' and trashed=false`,
+          fields: 'files(id, name)',
+        });
+        const files = response.result.files;
+        driveFileId = files?.length ? files[0].id : null;
+        return driveFileId;
+      });
+    }
+
+    async function saveToDrive() {
+      const fileContent = JSON.stringify({ videos: allVideos, categories, completed: completedList }, null, 2);
+      try {
+        await withDriveTokenRetry(async () => {
+          if (!driveFileId) await findOrCreateDriveFile();
+          if (!driveFileId) {
+            const created = await gapi.client.drive.files.create({ resource: { name: DRIVE_FILE_NAME, mimeType: 'application/json' }, fields: 'id' });
+            driveFileId = created.result.id;
+          }
+          await gapi.client.request({
+            path: `/upload/drive/v3/files/${driveFileId}`,
+            method: 'PATCH',
+            params: { uploadType: 'media' },
+            body: fileContent,
+          });
+        });
+        alert('Google Drive에 학습 데이터를 저장했습니다.');
+      } catch (error) {
+        console.error(error);
+        alert('Google Drive 저장 중 오류가 발생했습니다.');
+      }
+    }
+
+    async function loadFromDrive() {
+      try {
+        const imported = await withDriveTokenRetry(async () => {
+          if (!driveFileId) await findOrCreateDriveFile();
+          if (!driveFileId) return null;
+          const response = await gapi.client.drive.files.get({ fileId: driveFileId, alt: 'media' });
+          return typeof response.result === 'string' ? JSON.parse(response.result) : response.result;
+        });
+        if (!imported) { alert('Google Drive에 저장된 학습 데이터가 없습니다.'); return; }
+        const normalized = normalizeFolderData(imported.categories, imported.videos);
+        categories = normalized.categories;
+        allVideos = normalized.videos;
+        if (Array.isArray(imported.completed)) completedList = imported.completed;
+        persistFolderData();
+        localStorage.setItem('completed_videos', JSON.stringify(completedList));
+        selectCategory('all');
+        alert('Google Drive에서 학습 데이터를 불러왔습니다.');
+      } catch (error) {
+        console.error(error);
+        alert('Google Drive 데이터를 불러오는 중 오류가 발생했습니다.');
+      }
+    }
+
+    function moveSelectedCategoryDropdown() {
+      const targetId = document.getElementById('moveTargetSelect').value;
+      const target = getFolderById(targetId);
+      if (!selectedVideoIds.length || !target) { alert('이동할 강좌와 대상 폴더를 선택해 주세요.'); return; }
+      let movedIndex = 0;
+      const movedBaseTime = Date.now();
+      allVideos.forEach(video => {
+        if (selectedVideoIds.includes(video.id)) {
+          video.categoryId = target.id;
+          video.category = target.name;
+          video.movedAt = movedBaseTime + movedIndex++;
+        }
+      });
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      selectedVideoIds = [];
+      const masterCheck = document.getElementById('selectAllCheck');
+      if (masterCheck) masterCheck.checked = false;
+      renderCategories();
+      renderPlaylist();
+      alert(`선택한 강좌를 '${folderPath(targetId)}' 폴더로 이동했습니다.`);
+    }
+
+    function getFilteredVideos() {
+      const ids = getCurrentFolderIds();
+      let list = ids ? allVideos.filter(video => ids.has(video.categoryId)) : [...allVideos];
+      const sortType = document.getElementById('sortOption').value;
+      if (sortType === 'natural-asc') list.sort((a, b) => a.title.localeCompare(b.title, 'ko-KR', { numeric: true, sensitivity: 'base' }));
+      else if (sortType === 'natural-desc') list.sort((a, b) => b.title.localeCompare(a.title, 'ko-KR', { numeric: true, sensitivity: 'base' }));
+      else if (sortType === 'moved-asc') list.sort((a, b) => (a.movedAt || 0) - (b.movedAt || 0));
+      else if (sortType === 'title-asc') list.sort((a, b) => a.title.localeCompare(b.title));
+      else if (sortType === 'title-desc') list.sort((a, b) => b.title.localeCompare(a.title));
+      else if (sortType === 'recent') list.reverse();
+      else if (sortType === 'uncompleted-first') list.sort((a, b) => (completedList.includes(a.id) ? 1 : 0) - (completedList.includes(b.id) ? 1 : 0));
+      else if (sortType === 'completed-first') list.sort((a, b) => (completedList.includes(b.id) ? 1 : 0) - (completedList.includes(a.id) ? 1 : 0));
+      else if (sortType === 'random') list.sort(() => Math.random() - 0.5);
+      else if (sortType === 'length') list.sort((a, b) => a.title.length - b.title.length);
+      return list;
     }
 
     function sharePlayer() {
