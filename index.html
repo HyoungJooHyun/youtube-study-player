@@ -136,10 +136,10 @@
   </div>
 
   <!-- Main Content -->
-  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 max-w-7xl mx-auto w-full z-20">
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 p-5 max-w-[1600px] mx-auto w-full z-20">
     
-    <!-- Left: Player Section (7 cols) -->
-    <section class="lg:col-span-7 flex flex-col gap-4">
+    <!-- Left: Player Section (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-4">
       <div class="bg-black rounded-2xl shadow-2xl overflow-hidden border border-[#272727] ring-1 ring-white/5">
         <div class="aspect-video-container">
           <div id="player"></div>
@@ -179,15 +179,15 @@
       </div>
     </section>
 
-    <!-- Right: Explorer Playlist Section (5 cols) -->
-    <section class="lg:col-span-5 flex flex-col gap-4">
-      <div class="bg-[#181818] rounded-2xl p-4 border border-[#272727] shadow-xl flex-1 flex flex-col">
+    <!-- Center folder explorer (3 cols) and right curriculum (4 cols) -->
+    <section class="lg:col-span-7 lg:grid lg:grid-cols-7 gap-5 items-start">
+      <div class="lg:col-span-3 bg-[#181818] rounded-2xl p-4 border border-[#272727] shadow-xl flex flex-col">
         
         <!-- Folder Tree & Inline Folder Creator Header -->
         <div class="pb-3 mb-3 border-b border-[#272727]">
           <div class="flex items-center justify-between gap-2 mb-2">
             <h3 class="text-xs font-bold text-slate-300">📁 강좌 폴더</h3>
-          <div id="categoryTabContainer" class="max-h-[190px] overflow-y-auto custom-scrollbar rounded-xl border border-[#272727] bg-[#0f0f0f] p-1.5 space-y-0.5">
+          <div id="categoryTabContainer" class="max-h-[540px] overflow-y-auto custom-scrollbar rounded-xl border border-[#272727] bg-[#0f0f0f] p-1.5 space-y-0.5">
           </div>
           <button onclick="toggleInlineFolderInput()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-3 py-1.5 rounded-xl font-bold whitespace-nowrap transition flex items-center gap-1 shrink-0 active:scale-95">
             + 폴더 생성
@@ -207,13 +207,22 @@
           </div>
         </div>
 
+      </div>
+
+      <div class="lg:col-span-4 bg-[#181818] rounded-2xl p-4 border border-[#272727] shadow-xl flex flex-col">
         <!-- Progress Header & Controls -->
         <div class="flex flex-col gap-2.5 mb-3">
           <div class="flex items-center justify-between">
             <h3 class="font-bold text-slate-200 text-sm flex items-center gap-1.5">
               <span>📁</span> <span id="categoryTitle">전체 보기</span>
             </h3>
-            <span id="progressText" class="text-xs text-slate-400 font-mono">0 / 0 (0%)</span>
+            <div class="flex items-center gap-2">
+              <div id="folderScopeToggle" class="hidden rounded-lg border border-[#3f3f3f] bg-[#0f0f0f] p-0.5 text-[10px] whitespace-nowrap">
+                <button type="button" data-scope="direct" onclick="setFolderViewMode('direct')" class="rounded-md px-2 py-1 font-bold transition">📂 현재 폴더만</button>
+                <button type="button" data-scope="descendants" onclick="setFolderViewMode('descendants')" class="rounded-md px-2 py-1 font-bold transition">🌳 하위 포함 전체보기</button>
+              </div>
+              <span id="progressText" class="text-xs text-slate-400 font-mono">0 / 0 (0%)</span>
+            </div>
           </div>
 
           <!-- Total Count Badge -->
@@ -277,10 +286,8 @@
         </div>
 
         <!-- Video Item List -->
-        <div id="playlistContainer" class="flex-1 overflow-y-auto max-h-[400px] space-y-2 pr-1 custom-scrollbar">
+        <div id="playlistContainer" class="flex-1 overflow-y-auto max-h-[460px] space-y-2 pr-1 custom-scrollbar">
         </div>
-
-      </div>
 
       <!-- AdSense Sidebar Slot (Rectangle Box) -->
       <div class="bg-[#181818]/60 border border-dashed border-[#272727] rounded-2xl p-3 flex flex-col items-center justify-center min-h-[180px] text-center overflow-hidden">
@@ -292,6 +299,7 @@
              data-ad-format="auto"
              data-full-width-responsive="true"></ins>
         <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>
       </div>
     </section>
   </main>
@@ -430,6 +438,7 @@
     let player;
     let currentIndex = 0;
     let currentCategory = 'all';
+    let folderViewMode = 'direct';
     let completedList = JSON.parse(localStorage.getItem('completed_videos') || '[]');
     let selectedVideoIds = [];
     let editingCategory = null;
@@ -1256,10 +1265,10 @@
       const treeHeader = tree.parentElement;
       const rootButton = treeHeader?.querySelector('button[onclick="toggleInlineFolderInput()"]');
       if (treeHeader && rootButton) {
-        treeHeader.className = 'grid grid-cols-[1fr_auto] items-center gap-2 mb-2';
+        treeHeader.className = 'flex flex-col gap-2 mb-2';
         rootButton.textContent = '+ 최상위 폴더';
-        treeHeader.insertBefore(rootButton, tree);
-        tree.className = 'col-span-2 max-h-[190px] overflow-y-auto custom-scrollbar rounded-xl border border-[#272727] bg-[#0f0f0f] p-1.5 space-y-0.5';
+        treeHeader.append(rootButton);
+        tree.className = 'max-h-[540px] overflow-y-auto custom-scrollbar rounded-xl border border-[#272727] bg-[#0f0f0f] p-1.5 space-y-0.5';
       }
 
       tree.innerHTML = '';
@@ -1670,6 +1679,80 @@
     function exportProgress() {
       const data = encodeURIComponent(JSON.stringify({ videos: allVideos, categories, completed: completedList }));
       const link = document.createElement('a'); link.href = `data:text/json;charset=utf-8,${data}`; link.download = `study_explorer_${new Date().toISOString().slice(0, 10)}.json`; link.click();
+    }
+
+    // Folder filter scope: direct items by default, optionally include descendants.
+    function getCurrentFolderIds() {
+      if (currentCategory === 'all') return null;
+      return folderViewMode === 'descendants'
+        ? new Set(getDescendantIds(currentCategory))
+        : new Set([currentCategory]);
+    }
+
+    function folderVideoCount(folderId) {
+      const ids = folderViewMode === 'descendants'
+        ? new Set(getDescendantIds(folderId))
+        : new Set([folderId]);
+      return allVideos.filter(video => ids.has(video.categoryId)).length;
+    }
+
+    function updateFolderScopeToggle() {
+      const toggle = document.getElementById('folderScopeToggle');
+      if (!toggle) return;
+      toggle.classList.toggle('hidden', currentCategory === 'all');
+      toggle.querySelectorAll('button[data-scope]').forEach(button => {
+        const active = button.dataset.scope === folderViewMode;
+        button.className = `rounded-md px-2 py-1 font-bold transition ${active ? 'bg-red-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`;
+      });
+    }
+
+    function setFolderViewMode(mode) {
+      if (currentCategory === 'all') return;
+      folderViewMode = mode === 'descendants' ? 'descendants' : 'direct';
+      currentIndex = 0;
+      selectedVideoIds = [];
+      const masterCheck = document.getElementById('selectAllCheck');
+      if (masterCheck) masterCheck.checked = false;
+      updateFolderScopeToggle();
+      renderCategories();
+      renderPlaylist();
+    }
+
+    function selectCategory(folderId) {
+      currentCategory = folderId === 'all' || getFolderById(folderId) ? folderId : 'all';
+      folderViewMode = 'direct';
+      currentIndex = 0;
+      selectedVideoIds = [];
+      document.getElementById('categoryTitle').textContent = currentCategory === 'all' ? '전체 보기' : folderPath(currentCategory);
+      updateFolderScopeToggle();
+      renderCategories();
+      renderPlaylist();
+    }
+
+    function getFilteredVideos() {
+      const ids = getCurrentFolderIds();
+      let list = ids ? allVideos.filter(video => ids.has(video.categoryId)) : [...allVideos];
+      const sortType = document.getElementById('sortOption').value;
+      if (sortType === 'natural-asc') list.sort((a, b) => a.title.localeCompare(b.title, 'ko-KR', { numeric: true, sensitivity: 'base' }));
+      else if (sortType === 'natural-desc') list.sort((a, b) => b.title.localeCompare(a.title, 'ko-KR', { numeric: true, sensitivity: 'base' }));
+      else if (sortType === 'title-asc') list.sort((a, b) => a.title.localeCompare(b.title));
+      else if (sortType === 'title-desc') list.sort((a, b) => b.title.localeCompare(a.title));
+      else if (sortType === 'recent') list.reverse();
+      else if (sortType === 'uncompleted-first') list.sort((a, b) => (completedList.includes(a.id) ? 1 : 0) - (completedList.includes(b.id) ? 1 : 0));
+      else if (sortType === 'completed-first') list.sort((a, b) => (completedList.includes(b.id) ? 1 : 0) - (completedList.includes(a.id) ? 1 : 0));
+      else if (sortType === 'random') list.sort(() => Math.random() - 0.5);
+      else if (sortType === 'length') list.sort((a, b) => a.title.length - b.title.length);
+      return list;
+    }
+
+    function deleteAllInCurrentCategory() {
+      const visibleIds = new Set(getFilteredVideos().map(video => video.id));
+      if (!visibleIds.size || !confirm(`현재 보기의 강좌 ${visibleIds.size}개를 삭제하시겠습니까?`)) return;
+      allVideos = allVideos.filter(video => !visibleIds.has(video.id));
+      localStorage.setItem('custom_all_videos', JSON.stringify(allVideos));
+      selectedVideoIds = [];
+      renderCategories();
+      renderPlaylist();
     }
 
     function sharePlayer() {
