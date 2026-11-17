@@ -153,7 +153,15 @@
           <h2 id="currentTitle" class="text-base font-bold text-white line-clamp-2">강의를 선택하거나 우측에서 새 폴더를 생성 후 강좌를 수집해 보세요</h2>
         </div>
 
-        <div class="flex items-center justify-between pt-3 border-t border-[#272727]">
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#272727]">
+          <select id="playModeSelect" onchange="setPlayMode(this.value)" aria-label="재생 모드 선택" class="bg-[#0f0f0f] hover:bg-[#181818] border border-[#3f3f3f] text-slate-200 text-xs md:text-sm px-3 py-2 rounded-xl outline-none focus:border-red-500 font-semibold transition">
+            <option value="sequential">➡️ 순차 재생</option>
+            <option value="loop-all">🔁 전체 반복</option>
+            <option value="reverse">⬅️ 역차 재생</option>
+            <option value="shuffle">🔀 무작위 재생</option>
+            <option value="repeat-one">🔂 현재 강좌 반복</option>
+            <option value="uncompleted-only">⚡ 미완료만</option>
+          </select>
           <button onclick="playPrev()" class="bg-[#272727] hover:bg-[#323232] text-slate-200 text-xs md:text-sm px-4 py-2 rounded-xl flex items-center gap-1.5 transition font-medium active:scale-95">
             ◀ 이전
           </button>
@@ -444,6 +452,33 @@
     let selectedVideoIds = [];
     let editingCategory = null;
     let newFolderParentId = null;
+    const PLAY_MODES = ['sequential', 'loop-all', 'reverse', 'shuffle', 'repeat-one', 'uncompleted-only'];
+    let playMode = PLAY_MODES.includes(localStorage.getItem('player_play_mode')) ? localStorage.getItem('player_play_mode') : 'sequential';
+    // Stores the shuffle traversal as video IDs, so it stays valid when the list is re-sorted.
+    let playHistory = [];
+    let shuffleCycleIds = new Set();
+
+    function resetShuffleHistory() {
+      const currentVideo = getFilteredVideos()[currentIndex];
+      playHistory = currentVideo ? [currentVideo.id] : [];
+      shuffleCycleIds = new Set(currentVideo ? [currentVideo.id] : []);
+    }
+
+    function setPlayMode(mode) {
+      playMode = PLAY_MODES.includes(mode) ? mode : 'sequential';
+      localStorage.setItem('player_play_mode', playMode);
+      const select = document.getElementById('playModeSelect');
+      if (select) select.value = playMode;
+      resetShuffleHistory();
+    }
+
+    function restorePlayMode() {
+      const select = document.getElementById('playModeSelect');
+      if (select) select.value = playMode;
+      if (playMode === 'shuffle') resetShuffleHistory();
+    }
+
+    restorePlayMode();
 
     function makeFolderId() {
       return `folder_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -659,6 +694,7 @@
     }
 
     function onYouTubeIframeAPIReady() {
+      restorePlayMode();
       renderCategories();
       const filtered = getFilteredVideos();
       if (filtered.length > 0) {
@@ -675,7 +711,7 @@
     function onPlayerStateChange(event) {
       if (event.data === YT.PlayerState.ENDED) {
         markCurrentCompleted();
-        playNext();
+        handleAutoNext();
       }
     }
 
@@ -1661,16 +1697,95 @@
       renderCategories(); renderPlaylist();
     }
 
-    function playVideoIndex(index) {
+    function playVideoIndex(index, options = {}) {
       const videos = getFilteredVideos();
       if (index < 0 || index >= videos.length) return;
       currentIndex = index;
+      if (playMode === 'shuffle' && options.trackShuffle !== false) {
+        const videoId = videos[index].id;
+        if (playHistory[playHistory.length - 1] !== videoId) playHistory.push(videoId);
+        shuffleCycleIds.add(videoId);
+      }
       if (player?.loadVideoById) player.loadVideoById(videos[index].id);
       renderPlaylist();
     }
 
-    function playNext() { const videos = getFilteredVideos(); if (currentIndex < videos.length - 1) playVideoIndex(currentIndex + 1); }
-    function playPrev() { if (currentIndex > 0) playVideoIndex(currentIndex - 1); }
+    function getShuffleNextIndex(videos) {
+      if (!videos.length) return -1;
+      const currentId = videos[currentIndex]?.id;
+      let candidates = videos
+        .map((video, index) => ({ video, index }))
+        .filter(({ video }) => !playHistory.includes(video.id) && !shuffleCycleIds.has(video.id) && video.id !== currentId);
+
+      // Once every video has appeared, begin a fresh shuffle cycle while keeping
+      // the currently playing video out of the immediately next draw.
+      if (!candidates.length) {
+        playHistory = currentId ? [currentId] : [];
+        shuffleCycleIds = new Set(currentId ? [currentId] : []);
+        candidates = videos
+          .map((video, index) => ({ video, index }))
+          .filter(({ video }) => !shuffleCycleIds.has(video.id) && video.id !== currentId);
+      }
+      if (!candidates.length) return currentIndex; // A one-video playlist.
+      return candidates[Math.floor(Math.random() * candidates.length)].index;
+    }
+
+    function getUncompletedNextIndex(videos) {
+      for (let index = currentIndex + 1; index < videos.length; index++) {
+        if (!completedList.includes(videos[index].id)) return index;
+      }
+      return -1;
+    }
+
+    function getNextIndex({ manual = false } = {}) {
+      const videos = getFilteredVideos();
+      if (!videos.length) return -1;
+      const mode = manual && playMode === 'repeat-one' ? 'sequential' : playMode;
+      if (mode === 'reverse') return currentIndex > 0 ? currentIndex - 1 : -1;
+      if (mode === 'loop-all') return currentIndex < videos.length - 1 ? currentIndex + 1 : 0;
+      if (mode === 'shuffle') return getShuffleNextIndex(videos);
+      if (mode === 'uncompleted-only') return getUncompletedNextIndex(videos);
+      return currentIndex < videos.length - 1 ? currentIndex + 1 : -1;
+    }
+
+    function playNext() {
+      const nextIndex = getNextIndex({ manual: true });
+      if (nextIndex === -1) {
+        if (playMode === 'uncompleted-only') alert('이후에 재생할 미완료 강좌가 없습니다.');
+        return;
+      }
+      playVideoIndex(nextIndex);
+    }
+
+    function playPrev() {
+      const videos = getFilteredVideos();
+      if (!videos.length) return;
+      if (playMode === 'shuffle') {
+        // Remove the current entry, then use the preceding item in the history stack.
+        const currentId = videos[currentIndex]?.id;
+        if (playHistory[playHistory.length - 1] === currentId) playHistory.pop();
+        const previousId = playHistory[playHistory.length - 1];
+        const previousIndex = videos.findIndex(video => video.id === previousId);
+        if (previousIndex >= 0) playVideoIndex(previousIndex, { trackShuffle: false });
+        return;
+      }
+      const previousIndex = playMode === 'reverse' ? currentIndex + 1 : currentIndex - 1;
+      if (previousIndex >= 0 && previousIndex < videos.length) playVideoIndex(previousIndex);
+    }
+
+    function handleAutoNext() {
+      if (playMode === 'repeat-one') {
+        if (player?.seekTo) player.seekTo(0);
+        if (player?.playVideo) player.playVideo();
+        return;
+      }
+      const nextIndex = getNextIndex();
+      if (nextIndex === -1) {
+        if (playMode === 'uncompleted-only') alert('남은 미완료 강좌가 없습니다. 재생을 중지합니다.');
+        return;
+      }
+      playVideoIndex(nextIndex);
+    }
     function toggleCompleteCurrent() {
       const video = getFilteredVideos()[currentIndex]; if (!video) return;
       completedList = completedList.includes(video.id) ? completedList.filter(id => id !== video.id) : [...completedList, video.id];
@@ -1711,6 +1826,7 @@
       if (currentCategory === 'all') return;
       folderViewMode = mode === 'descendants' ? 'descendants' : 'direct';
       currentIndex = 0;
+      if (playMode === 'shuffle') resetShuffleHistory();
       selectedVideoIds = [];
       const masterCheck = document.getElementById('selectAllCheck');
       if (masterCheck) masterCheck.checked = false;
@@ -1723,6 +1839,7 @@
       currentCategory = folderId === 'all' || getFolderById(folderId) ? folderId : 'all';
       folderViewMode = 'direct';
       currentIndex = 0;
+      if (playMode === 'shuffle') resetShuffleHistory();
       selectedVideoIds = [];
       document.getElementById('categoryTitle').textContent = currentCategory === 'all' ? '전체 보기' : folderPath(currentCategory);
       updateFolderScopeToggle();
